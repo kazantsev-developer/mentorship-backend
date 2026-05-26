@@ -45,13 +45,13 @@ Docker и Docker Compose
 
 ### Краткое описание ключевых файлов и их роли
 
-`cmd/api/main.go` - Инициализация зависимостей, запуск Gin-сервера, регистрация маршрутов
-`internal/config/config.go` - Загрузка `.env`, структура конфигурации (БД, JWT, порт)
-`internal/models/` - Все GORM-модели (пользователи, блоки, материалы, прогресс, бонусы и т.д.)
-`internal/repositories/` - CRUD-операции с БД (каждая таблица – свой репозиторий)
-`internal/services/` - Бизнес-логика (расчёт прогресса, начисление бонусов, выдача достижений)
-`internal/handlers/` - Обработка HTTP-запросов, вызов сервисов, формирование JSON-ответов
-`internal/middleware/auth.go` - Проверка JWT, извлечение `userID` и ролей из токена
-`pkg/db/postgres.go` - Подключение к PostgreSQL, автоматические миграции (GORM)
-`docker-compose.yml` - Описание сервисов (PostgreSQL + бэкенд)
-`Dockerfile` - Многостадийная сборка Go-приложения
+cmd/api/main.go - инициализация зависимостей, запуск Gin-сервера, регистрация маршрутов
+internal/config/config.go - загрузка .env, структура конфигурации (БД, JWT, порт)
+internal/models/ - Все GORM-модели (пользователи, блоки, материалы, прогресс, бонусы и т.д.)
+internal/repositories/ - CRUD-операции с БД (каждая таблица – свой репозиторий)
+internal/services/ - бизнес логика (расчёт прогресса, начисление бонусов, выдача достижений)
+internal/handlers/ - обработка HTTP-запросов, вызов сервисов, формирование JSON-ответов
+internal/middleware/auth.go - проверка JWT, извлечение userID и ролей из токена
+pkg/db/postgres.go - подключение к PostgreSQL, автоматические миграции (GORM)
+docker-compose.yml - описание сервисов (PostgreSQL + бэкенд)
+Dockerfile - многостадийная сборка Go-приложения
