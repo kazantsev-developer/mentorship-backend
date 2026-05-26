@@ -59,8 +59,15 @@ func (h *FinalCheckHandler) Complete(c *gin.Context) {
 
 func (h *FinalCheckHandler) GetForStudent(c *gin.Context) {
 	studentID := c.Param("student_id")
+	if studentID == "me" {
+		studentID = c.GetString("userID")
+	}
 	if studentID == "" {
 		studentID = c.GetString("userID")
+	}
+	if studentID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "student_id is required"})
+		return
 	}
 	checks, err := h.service.GetStudentFinalChecks(studentID)
 	if err != nil {
