@@ -7,10 +7,10 @@ import (
 type BlockStatus string
 
 const (
-	BlockNotStarted              BlockStatus = "not_started"
-	BlockInProgress              BlockStatus = "in_progress"
+	BlockNotStarted               BlockStatus = "not_started"
+	BlockInProgress               BlockStatus = "in_progress"
 	BlockWaitingBuddyConfirmation BlockStatus = "waiting_buddy_confirmation"
-	BlockApproved                BlockStatus = "approved"
+	BlockApproved                 BlockStatus = "approved"
 )
 
 // MaterialProgress – отметка о просмотре материала студентом

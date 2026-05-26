@@ -16,7 +16,8 @@ func NewRoadmapHandler(roadmapService *services.RoadmapService) *RoadmapHandler 
 }
 
 func (h *RoadmapHandler) GetRoadmap(c *gin.Context) {
-	roadmap, err := h.roadmapService.GetFullRoadmap()
+	studentID := c.GetString("userID")
+	roadmap, err := h.roadmapService.GetFullRoadmap(studentID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch roadmap"})
 		return

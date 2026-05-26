@@ -11,8 +11,8 @@ import (
 )
 
 type AssignmentService struct {
-	db        *gorm.DB
-	userRepo  *repositories.UserRepository
+	db       *gorm.DB
+	userRepo *repositories.UserRepository
 }
 
 func NewAssignmentService(db *gorm.DB, userRepo *repositories.UserRepository) *AssignmentService {

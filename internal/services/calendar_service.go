@@ -18,17 +18,17 @@ func NewCalendarService(db *gorm.DB) *CalendarService {
 
 func (s *CalendarService) CreateEvent(buddyID, studentID, title, eventType, description string, start, end *time.Time, reminder bool) (*models.CalendarEvent, error) {
 	event := models.CalendarEvent{
-		ID:               uuid.New().String(),
-		Title:            title,
-		StudentID:        studentID,
-		BuddyID:          buddyID,
-		Type:             eventType,
-		StartDatetime:    *start,
-		EndDatetime:      end,
-		Description:      description,
-		ReminderEnabled:  reminder,
-		CreatedAt:        time.Now(),
-		UpdatedAt:        time.Now(),
+		ID:              uuid.New().String(),
+		Title:           title,
+		StudentID:       studentID,
+		BuddyID:         buddyID,
+		Type:            eventType,
+		StartDatetime:   *start,
+		EndDatetime:     end,
+		Description:     description,
+		ReminderEnabled: reminder,
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
 	}
 	err := s.db.Create(&event).Error
 	return &event, err

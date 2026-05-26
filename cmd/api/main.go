@@ -27,7 +27,7 @@ func main() {
 	authHandler := handlers.NewAuthHandler(authService)
 
 	blockRepo := repositories.NewBlockRepository(db.GetDB())
-	roadmapService := services.NewRoadmapService(blockRepo)
+	roadmapService := services.NewRoadmapService(blockRepo, db.GetDB())
 	roadmapHandler := handlers.NewRoadmapHandler(roadmapService)
 
 	materialRepo := repositories.NewMaterialRepository(db.GetDB())
@@ -147,8 +147,25 @@ func main() {
 			c.JSON(200, gin.H{"discount_percent": discount})
 		})
 		protected.GET("/achievements", func(c *gin.Context) {
-			// можно расширить для выдачи списка достижений с прогрессом
-			c.JSON(200, []interface{}{})
+			achievements, err := achievementRepo.GetActiveAchievements()
+			if err != nil {
+				c.JSON(500, gin.H{"error": err.Error()})
+				return
+			}
+			userID := c.GetString("userID")
+			result := make([]map[string]interface{}, 0)
+			for _, ach := range achievements {
+				has, _ := achievementRepo.HasUserAchievement(userID, ach.ID)
+				result = append(result, map[string]interface{}{
+					"id":           ach.ID,
+					"title":        ach.Title,
+					"description":  ach.Description,
+					"reward_bonus": ach.RewardBonus,
+					"image_url":    ach.ImageURL,
+					"unlocked":     has,
+				})
+			}
+			c.JSON(200, result)
 		})
 
 		// Подтверждение блока (Buddy)

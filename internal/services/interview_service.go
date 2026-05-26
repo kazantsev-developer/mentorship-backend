@@ -41,17 +41,19 @@ func (s *InterviewService) CreateReal(studentID string, input InterviewInput) (*
 		Result:    "pending",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
+		// BuddyID остаётся nil, что соответствует NULL в БД
 	}
 	err := s.db.Create(&interview).Error
 	return &interview, err
 }
 
 func (s *InterviewService) CreateMock(buddyID, studentID string, input InterviewInput) (*models.Interview, error) {
+	buddyIDPtr := &buddyID
 	interview := models.Interview{
 		ID:        uuid.New().String(),
 		Type:      models.InterviewMock,
 		StudentID: studentID,
-		BuddyID:   buddyID,
+		BuddyID:   buddyIDPtr,
 		URL:       input.URL,
 		Company:   input.Company,
 		Position:  input.Position,
