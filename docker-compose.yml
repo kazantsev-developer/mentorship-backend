@@ -37,6 +37,7 @@ services:
       JWT_SECRET: your-super-secret-key
       GIN_MODE: release
       PORT: 8080
+      ALLOWED_ORIGINS: http://localhost:3000,http://185.75.189.130:3000,http://185.75.189.130:3001
     restart: unless-stopped
 
 volumes:

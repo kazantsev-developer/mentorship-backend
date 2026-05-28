@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -10,10 +11,11 @@ import (
 )
 
 type Config struct {
-	Server   ServerConfig
-	Database DatabaseConfig
-	JWT      JWTConfig
-	Admin    AdminConfig
+	Server         ServerConfig
+	Database       DatabaseConfig
+	JWT            JWTConfig
+	Admin          AdminConfig
+	AllowedOrigins []string
 }
 
 type ServerConfig struct {
@@ -69,8 +71,8 @@ func Load() (*Config, error) {
 			Login:    getEnv("ADMIN_LOGIN", "admin"),
 			Password: getEnv("ADMIN_PASSWORD", "admin123"),
 		},
+		AllowedOrigins: parseOrigins(getEnv("ALLOWED_ORIGINS", "http://localhost:3000")),
 	}
-
 	cfg.JWT.ExpiresAt = time.Duration(cfg.JWT.ExpiresHour) * time.Hour
 
 	AppConfig = cfg
@@ -84,6 +86,20 @@ func (c *Config) GetDSN() string {
 		" password=" + c.Database.Password +
 		" dbname=" + c.Database.DBName +
 		" sslmode=" + c.Database.SSLMode
+}
+
+func parseOrigins(originsStr string) []string {
+	if originsStr == "" {
+		return []string{}
+	}
+	parts := strings.Split(originsStr, ",")
+	result := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if trimmed := strings.TrimSpace(p); trimmed != "" {
+			result = append(result, trimmed)
+		}
+	}
+	return result
 }
 
 func getEnv(key, defaultValue string) string {

@@ -2,7 +2,9 @@ package main
 
 import (
 	"log"
+	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/kazantsev/mentorship-backend/internal/config"
 	"github.com/kazantsev/mentorship-backend/internal/handlers"
@@ -65,18 +67,15 @@ func main() {
 
 	r := gin.Default()
 
-	// CORS middleware
-	r.Use(func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE, OPTIONS")
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(204)
-			return
-		}
-		c.Next()
-	})
+	// Профессиональная настройка CORS
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     cfg.AllowedOrigins,
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
 
 	// Публичные маршруты
 	r.GET("/ping", func(c *gin.Context) {
@@ -189,7 +188,6 @@ func main() {
 			adminGroup.POST("/blocks", adminRoadmapHandler.CreateBlock)
 			adminGroup.PUT("/blocks/:id", adminRoadmapHandler.UpdateBlock)
 			adminGroup.DELETE("/blocks/:id", adminRoadmapHandler.DeleteBlock)
-			// Аналогично можно добавить маршруты для материалов и достижений
 		}
 
 		// Buddy: свои ученики
