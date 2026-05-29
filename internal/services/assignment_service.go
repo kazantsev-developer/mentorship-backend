@@ -11,17 +11,24 @@ import (
 )
 
 type AssignmentService struct {
-	db       *gorm.DB
-	userRepo *repositories.UserRepository
+	db           *gorm.DB
+	userRepo     *repositories.UserRepository
+	progressRepo *repositories.ProgressRepository
 }
 
-func NewAssignmentService(db *gorm.DB, userRepo *repositories.UserRepository) *AssignmentService {
-	return &AssignmentService{db: db, userRepo: userRepo}
+func NewAssignmentService(
+	db *gorm.DB,
+	userRepo *repositories.UserRepository,
+	progressRepo *repositories.ProgressRepository,
+) *AssignmentService {
+	return &AssignmentService{
+		db:           db,
+		userRepo:     userRepo,
+		progressRepo: progressRepo,
+	}
 }
 
-// AssignBuddyToStudent назначает студенту buddy (удаляет старое назначение, если было)
 func (s *AssignmentService) AssignBuddyToStudent(studentID, buddyID string) error {
-	// Проверяем, что student и buddy существуют и имеют соответствующие роли
 	student, err := s.userRepo.FindByID(studentID)
 	if err != nil {
 		return err
@@ -36,7 +43,6 @@ func (s *AssignmentService) AssignBuddyToStudent(studentID, buddyID string) erro
 	if buddy == nil {
 		return errors.New("buddy not found")
 	}
-	// Удаляем старые назначения
 	if err := s.db.Where("student_id = ?", studentID).Delete(&models.StudentBuddyAssignment{}).Error; err != nil {
 		return err
 	}
@@ -49,7 +55,6 @@ func (s *AssignmentService) AssignBuddyToStudent(studentID, buddyID string) erro
 	return s.db.Create(&assignment).Error
 }
 
-// GetBuddyForStudent возвращает buddy студента
 func (s *AssignmentService) GetBuddyForStudent(studentID string) (*models.User, error) {
 	var assignment models.StudentBuddyAssignment
 	err := s.db.Where("student_id = ?", studentID).First(&assignment).Error
@@ -62,22 +67,39 @@ func (s *AssignmentService) GetBuddyForStudent(studentID string) (*models.User, 
 	return s.userRepo.FindByID(assignment.BuddyID)
 }
 
-// GetStudentsForBuddy возвращает список студентов, закреплённых за buddy
-func (s *AssignmentService) GetStudentsForBuddy(buddyID string) ([]models.User, error) {
+func (s *AssignmentService) GetStudentsForBuddy(buddyID string) ([]models.BuddyStudentResponse, error) {
 	var assignments []models.StudentBuddyAssignment
 	err := s.db.Where("buddy_id = ?", buddyID).Find(&assignments).Error
 	if err != nil {
 		return nil, err
 	}
-	students := make([]models.User, 0, len(assignments))
+	students := make([]models.BuddyStudentResponse, 0, len(assignments))
 	for _, a := range assignments {
 		student, err := s.userRepo.FindByID(a.StudentID)
+		if err != nil || student == nil {
+			continue
+		}
+		currentBlock, err := s.progressRepo.GetStudentCurrentBlock(student.ID)
 		if err != nil {
 			continue
 		}
-		if student != nil {
-			students = append(students, *student)
+		currentBlockTitle := "Не назначен"
+		progressPercent := 0
+		status := "not_started"
+		if currentBlock != nil {
+			currentBlockTitle = currentBlock.Title
+			progressPercent, _ = s.progressRepo.GetBlockProgressPercent(student.ID, currentBlock.ID)
+			status, _ = s.progressRepo.GetBlockStatus(student.ID, currentBlock.ID)
 		}
+		daysInactive, _ := s.progressRepo.GetLastActivityDays(student.ID)
+
+		students = append(students, models.BuddyStudentResponse{
+			User:              *student,
+			CurrentBlockTitle: currentBlockTitle,
+			ProgressPercent:   progressPercent,
+			Status:            status,
+			DaysInactive:      daysInactive,
+		})
 	}
 	return students, nil
 }
