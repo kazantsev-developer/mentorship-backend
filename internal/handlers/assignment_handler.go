@@ -4,15 +4,17 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kazantsev/mentorship-backend/internal/repositories"
 	"github.com/kazantsev/mentorship-backend/internal/services"
 )
 
 type AssignmentHandler struct {
-	service *services.AssignmentService
+	service      *services.AssignmentService
+	activityRepo *repositories.ActivityRepository
 }
 
-func NewAssignmentHandler(service *services.AssignmentService) *AssignmentHandler {
-	return &AssignmentHandler{service: service}
+func NewAssignmentHandler(service *services.AssignmentService, activityRepo *repositories.ActivityRepository) *AssignmentHandler {
+	return &AssignmentHandler{service: service, activityRepo: activityRepo}
 }
 
 func (h *AssignmentHandler) AssignBuddy(c *gin.Context) {
@@ -39,4 +41,15 @@ func (h *AssignmentHandler) MyStudents(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, students)
+}
+
+// GetStudentActivity метод для получения активности студента
+func (h *AssignmentHandler) GetStudentActivity(c *gin.Context) {
+	studentID := c.Param("id")
+	activities, err := h.activityRepo.GetStudentActivities(studentID, 50)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, activities)
 }

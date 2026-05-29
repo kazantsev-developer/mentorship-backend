@@ -9,13 +9,15 @@ type ProgressService struct {
 	progressRepo       *repositories.ProgressRepository
 	materialRepo       *repositories.MaterialRepository
 	achievementService *AchievementService
+	activityRepo       *repositories.ActivityRepository
 }
 
-func NewProgressService(progressRepo *repositories.ProgressRepository, materialRepo *repositories.MaterialRepository, achievementService *AchievementService) *ProgressService {
+func NewProgressService(progressRepo *repositories.ProgressRepository, materialRepo *repositories.MaterialRepository, achievementService *AchievementService, activityRepo *repositories.ActivityRepository) *ProgressService {
 	return &ProgressService{
 		progressRepo:       progressRepo,
 		materialRepo:       materialRepo,
 		achievementService: achievementService,
+		activityRepo:       activityRepo,
 	}
 }
 
@@ -28,6 +30,10 @@ func (s *ProgressService) MarkMaterialViewed(studentID, materialID string) (stri
 		return "", err
 	}
 	blockID := material.BlockID
+
+	// Запись активности
+	metadata := `{"title": "` + material.Title + `"}`
+	_ = s.activityRepo.CreateActivity(studentID, studentID, "material_viewed", "material", materialID, metadata)
 
 	materials, err := s.materialRepo.GetMaterialsByBlockID(blockID)
 	if err != nil {

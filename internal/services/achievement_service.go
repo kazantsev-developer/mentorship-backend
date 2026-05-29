@@ -9,10 +9,11 @@ import (
 type AchievementService struct {
 	repo         *repositories.AchievementRepository
 	bonusService *BonusService
+	activityRepo *repositories.ActivityRepository
 }
 
-func NewAchievementService(repo *repositories.AchievementRepository, bonusService *BonusService) *AchievementService {
-	return &AchievementService{repo: repo, bonusService: bonusService}
+func NewAchievementService(repo *repositories.AchievementRepository, bonusService *BonusService, activityRepo *repositories.ActivityRepository) *AchievementService {
+	return &AchievementService{repo: repo, bonusService: bonusService, activityRepo: activityRepo}
 }
 
 func (s *AchievementService) CheckAndGrantByMaterialCount(userID string, count int) error {
@@ -36,6 +37,8 @@ func (s *AchievementService) CheckAndGrantByMaterialCount(userID string, count i
 			}
 			if reward > 0 {
 				s.bonusService.EarnAchievementBonus(userID, reward, ach.ID)
+				metadata := `{"title": "` + ach.Title + `"}`
+				_ = s.activityRepo.CreateActivity(userID, userID, "achievement_earned", "achievement", ach.ID, metadata)
 			}
 		}
 	}
@@ -63,6 +66,8 @@ func (s *AchievementService) CheckAndGrantByBlockClosed(userID string, blockNumb
 			}
 			if reward > 0 {
 				s.bonusService.EarnAchievementBonus(userID, reward, ach.ID)
+				metadata := `{"title": "` + ach.Title + `"}`
+				_ = s.activityRepo.CreateActivity(userID, userID, "achievement_earned", "achievement", ach.ID, metadata)
 			}
 		}
 	}

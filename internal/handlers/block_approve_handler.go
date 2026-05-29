@@ -9,10 +9,11 @@ import (
 
 type BlockApproveHandler struct {
 	progressRepo *repositories.ProgressRepository
+	activityRepo *repositories.ActivityRepository
 }
 
-func NewBlockApproveHandler(progressRepo *repositories.ProgressRepository) *BlockApproveHandler {
-	return &BlockApproveHandler{progressRepo: progressRepo}
+func NewBlockApproveHandler(progressRepo *repositories.ProgressRepository, activityRepo *repositories.ActivityRepository) *BlockApproveHandler {
+	return &BlockApproveHandler{progressRepo: progressRepo, activityRepo: activityRepo}
 }
 
 func (h *BlockApproveHandler) ApproveBlock(c *gin.Context) {
@@ -29,5 +30,8 @@ func (h *BlockApproveHandler) ApproveBlock(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	metadata := `{"block_id": "` + req.BlockID + `"}`
+	_ = h.activityRepo.CreateActivity(req.StudentID, buddyID, "block_approved", "block", req.BlockID, metadata)
+
 	c.JSON(http.StatusOK, gin.H{"status": "approved"})
 }

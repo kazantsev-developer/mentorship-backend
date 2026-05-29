@@ -5,15 +5,17 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kazantsev/mentorship-backend/internal/repositories"
 	"github.com/kazantsev/mentorship-backend/internal/services"
 )
 
 type InterviewHandler struct {
-	service *services.InterviewService
+	service      *services.InterviewService
+	activityRepo *repositories.ActivityRepository
 }
 
-func NewInterviewHandler(service *services.InterviewService) *InterviewHandler {
-	return &InterviewHandler{service: service}
+func NewInterviewHandler(service *services.InterviewService, activityRepo *repositories.ActivityRepository) *InterviewHandler {
+	return &InterviewHandler{service: service, activityRepo: activityRepo}
 }
 
 func (h *InterviewHandler) CreateReal(c *gin.Context) {
@@ -78,6 +80,9 @@ func (h *InterviewHandler) CreateMock(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	metadata := `{"company": "` + req.Company + `", "position": "` + req.Position + `"}`
+	_ = h.activityRepo.CreateActivity(req.StudentID, buddyID, "mock_created", "interview", interview.ID, metadata)
+
 	c.JSON(http.StatusCreated, interview)
 }
 
