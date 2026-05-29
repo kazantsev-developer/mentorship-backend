@@ -31,7 +31,7 @@ func main() {
 	blockRepo := repositories.NewBlockRepository(db.GetDB())
 	materialRepo := repositories.NewMaterialRepository(db.GetDB())
 	progressRepo := repositories.NewProgressRepository(db.GetDB())
-	activityRepo := repositories.NewActivityRepository(db.GetDB()) // новый
+	activityRepo := repositories.NewActivityRepository(db.GetDB())
 
 	roadmapService := services.NewRoadmapService(blockRepo, db.GetDB())
 	roadmapHandler := handlers.NewRoadmapHandler(roadmapService)
@@ -39,16 +39,23 @@ func main() {
 	bonusRepo := repositories.NewBonusRepository(db.GetDB())
 	bonusService := services.NewBonusService(bonusRepo)
 	achievementRepo := repositories.NewAchievementRepository(db.GetDB())
-	achievementService := services.NewAchievementService(achievementRepo, bonusService, activityRepo) // добавлен activityRepo
+	achievementService := services.NewAchievementService(achievementRepo, bonusService, activityRepo)
 
-	progressService := services.NewProgressService(progressRepo, materialRepo, achievementService, activityRepo) // добавлен activityRepo
+	progressService := services.NewProgressService(progressRepo, materialRepo, achievementService, activityRepo)
 	progressHandler := handlers.NewProgressHandler(progressService)
 
-	assignmentService := services.NewAssignmentService(db.GetDB(), userRepo)
-	assignmentHandler := handlers.NewAssignmentHandler(assignmentService, activityRepo) // добавлен activityRepo
+	assignmentService := services.NewAssignmentService(db.GetDB(), userRepo, progressRepo)
+	assignmentHandler := handlers.NewAssignmentHandler(
+		assignmentService,
+		userRepo,
+		progressRepo,
+		blockRepo,
+		activityRepo,
+		db.GetDB(),
+	)
 
 	interviewService := services.NewInterviewService(db.GetDB())
-	interviewHandler := handlers.NewInterviewHandler(interviewService, activityRepo) // добавлен activityRepo
+	interviewHandler := handlers.NewInterviewHandler(interviewService, activityRepo)
 
 	calendarService := services.NewCalendarService(db.GetDB())
 	calendarHandler := handlers.NewCalendarHandler(calendarService)
@@ -61,7 +68,7 @@ func main() {
 
 	profileHandler := handlers.NewProfileHandler(userRepo)
 
-	blockApproveHandler := handlers.NewBlockApproveHandler(progressRepo, activityRepo) // добавлен activityRepo
+	blockApproveHandler := handlers.NewBlockApproveHandler(progressRepo, activityRepo)
 	adminUserHandler := handlers.NewAdminUserHandler(userRepo, authService)
 	adminRoadmapHandler := handlers.NewAdminRoadmapHandler(db.GetDB())
 
@@ -179,9 +186,9 @@ func main() {
 		}
 
 		protected.GET("/my-students", assignmentHandler.MyStudents)
-
-		// Маршрут для получения активности студента (buddy)
 		protected.GET("/buddy/students/:id/activity", assignmentHandler.GetStudentActivity)
+		protected.GET("/buddy/students/:id", assignmentHandler.GetStudent)
+		protected.GET("/buddy/students/:id/roadmap", assignmentHandler.GetStudentRoadmap)
 
 		protected.POST("/interviews/real", interviewHandler.CreateReal)
 		protected.POST("/interviews/mock", interviewHandler.CreateMock)
