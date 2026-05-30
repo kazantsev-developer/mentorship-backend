@@ -51,3 +51,11 @@ func (s *BonusService) ConvertBonusToDiscount(userID string, bonusAmount int) (i
 	}
 	return discount, nil
 }
+
+func (s *BonusService) SpendForOneOnOne(userID, requestID string) (int, error) {
+	bal, err := s.repo.AddTransaction(userID, models.BonusTypeOneOnOneSpend, -1000, "1x1 session", "one_on_one", requestID)
+	if err != nil {
+		return 0, err
+	}
+	return bal.Balance, nil
+}

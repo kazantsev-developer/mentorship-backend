@@ -69,8 +69,21 @@ func main() {
 	profileHandler := handlers.NewProfileHandler(userRepo)
 
 	blockApproveHandler := handlers.NewBlockApproveHandler(progressRepo, activityRepo)
-	adminUserHandler := handlers.NewAdminUserHandler(userRepo, authService)
+
+	// Админские хендлеры (расширенные)
+	adminUserHandler := handlers.NewAdminUserHandler(
+		userRepo,
+		authService,
+		progressRepo,
+		blockRepo,
+		activityRepo,
+		db.GetDB(),
+	)
 	adminRoadmapHandler := handlers.NewAdminRoadmapHandler(db.GetDB())
+	adminMaterialHandler := handlers.NewAdminMaterialHandler(db.GetDB())
+	adminAchievementHandler := handlers.NewAdminAchievementHandler(db.GetDB())
+	adminStatsHandler := handlers.NewAdminStatsHandler(db.GetDB())
+	adminOneOnOneHandler := handlers.NewAdminOneOnOneHandler(db.GetDB(), bonusService)
 
 	r := gin.Default()
 
@@ -170,19 +183,52 @@ func main() {
 
 		protected.POST("/blocks/approve", blockApproveHandler.ApproveBlock)
 
+		// Админские роуты
 		adminGroup := protected.Group("/admin")
 		adminGroup.Use(middleware.RoleMiddleware("admin"))
 		{
-			adminGroup.POST("/assign-buddy", assignmentHandler.AssignBuddy)
+			// Пользователи
 			adminGroup.GET("/users", adminUserHandler.ListUsers)
 			adminGroup.POST("/users", adminUserHandler.CreateUser)
+			adminGroup.GET("/users/:user_id", adminUserHandler.GetUser)
 			adminGroup.PUT("/users/:user_id", adminUserHandler.UpdateUser)
 			adminGroup.DELETE("/users/:user_id", adminUserHandler.DeleteUser)
 			adminGroup.POST("/users/:user_id/change-password", adminUserHandler.ChangePassword)
+			adminGroup.GET("/users/:user_id/progress", adminUserHandler.GetUserProgress)
+			adminGroup.POST("/users/:user_id/approve-block/:block_id", adminUserHandler.ApproveBlock)
+
+			// Назначение buddy
+			adminGroup.POST("/assign-buddy", assignmentHandler.AssignBuddy)
+
+			// Roadmap блоки
 			adminGroup.GET("/blocks", adminRoadmapHandler.ListBlocks)
 			adminGroup.POST("/blocks", adminRoadmapHandler.CreateBlock)
 			adminGroup.PUT("/blocks/:id", adminRoadmapHandler.UpdateBlock)
 			adminGroup.DELETE("/blocks/:id", adminRoadmapHandler.DeleteBlock)
+
+			// Материалы
+			adminGroup.GET("/materials", adminMaterialHandler.ListMaterials)
+			adminGroup.POST("/materials", adminMaterialHandler.CreateMaterial)
+			adminGroup.PUT("/materials/:id", adminMaterialHandler.UpdateMaterial)
+			adminGroup.DELETE("/materials/:id", adminMaterialHandler.DeleteMaterial)
+			adminGroup.PATCH("/materials/:id/status", adminMaterialHandler.ToggleMaterialStatus)
+
+			// Достижения
+			adminGroup.GET("/achievements", adminAchievementHandler.ListAchievements)
+			adminGroup.POST("/achievements", adminAchievementHandler.CreateAchievement)
+			adminGroup.PUT("/achievements/:id", adminAchievementHandler.UpdateAchievement)
+			adminGroup.DELETE("/achievements/:id", adminAchievementHandler.DeleteAchievement)
+			adminGroup.PATCH("/achievements/:id/status", adminAchievementHandler.ToggleAchievementStatus)
+			adminGroup.GET("/achievements/:id/users", adminAchievementHandler.GetAchievementUsers)
+
+			// Заявки 1x1 (админ)
+			adminGroup.GET("/one-on-one", adminOneOnOneHandler.ListRequests)
+			adminGroup.POST("/one-on-one/:id/approve", adminOneOnOneHandler.Approve)
+			adminGroup.POST("/one-on-one/:id/reject", adminOneOnOneHandler.Reject)
+			adminGroup.POST("/one-on-one/:id/complete", adminOneOnOneHandler.Complete)
+
+			// Статистика
+			adminGroup.GET("/stats", adminStatsHandler.GetStats)
 		}
 
 		protected.GET("/my-students", assignmentHandler.MyStudents)

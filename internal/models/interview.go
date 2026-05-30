@@ -13,7 +13,7 @@ type Interview struct {
 	ID        string        `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
 	Type      InterviewType `gorm:"type:varchar(10);not null"`
 	StudentID string        `gorm:"type:uuid;not null;index"`
-	BuddyID   *string       `gorm:"type:uuid;index"` // разрешаем NULL
+	BuddyID   *string       `gorm:"type:uuid;index"`
 	URL       string
 	Company   string
 	Position  string

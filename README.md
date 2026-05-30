@@ -56,52 +56,114 @@ Docker Compose – контейнеризация
 
 ## Основные эндпоинты
 
-Публичные
+## Публичные
+
 POST /api/auth/register Регистрация
 POST /api/auth/login Вход (JWT-токен)
-Защищённые (требуют токен)
+
+## Защищённые (требуют токен)
 
 ## Профиль
 
-GET /api/user/profile Текущий пользователь
-PUT /api/user/profile Обновление профиля
-GET /api/user/:id/profile Публичный профиль
-Roadmap и прогресс
+GET /api/user/profile – текущий пользователь
+PUT /api/user/profile – обновление профиля
+GET /api/user/:id/profile – публичный профиль
 
-GET /api/roadmap Блоки и материалы с прогрессом
-POST /api/materials/view Отметка материала пройденным
-Бонусы и достижения
+## Roadmap и прогресс
 
-GET /api/bonus/balance Баланс бонусов
-GET /api/bonus/history История операций
-POST /api/bonus/convert Конвертация 100 бонусов → 1%
-GET /api/achievements Список достижений с прогрессом
+GET /api/roadmap – блоки и материалы с прогрессом студента
+POST /api/materials/view – отметка материала просмотренным
+
+## Бонусы и достижения
+
+GET /api/bonus/balance – баланс бонусов
+GET /api/bonus/history – история операций
+POST /api/bonus/convert – конвертация 100 бонусов → 1% скидки
+GET /api/achievements – список достижений с прогрессом
 Buddy (наставник)
-
-GET /api/my-students Студенты текущего бадди
-POST /api/blocks/approve Подтверждение блока
-GET /api/buddy/students/:id Данные студента
-GET /api/buddy/students/:id/roadmap Прогресс по блокам студента
-GET /api/buddy/students/:id/activity История активности студента
+GET /api/my-students – список закреплённых студентов
+POST /api/blocks/approve – подтверждение блока
+GET /api/buddy/students/:id – данные студента
+GET /api/buddy/students/:id/roadmap – прогресс по блокам студента
+GET /api/buddy/students/:id/activity – история активности студента
 
 ## Собеседования
 
-POST /api/interviews/real Добавление real-собеседования
-POST /api/interviews/mock Добавление mock-собеседования
-GET /api/interviews/my Список собеседований студента
-GET /api/interviews/real Общий каталог real
+POST /api/interviews/real – добавить real‑собеседование
+POST /api/interviews/mock – добавить mock‑собеседование
+GET /api/interviews/my – список собеседований студента
+GET /api/interviews/real – общий каталог real‑собеседований
+
+## Календарь
+
+POST /api/calendar/events – создать событие (buddy)
+GET /api/calendar/events – события для текущего пользователя
+GET /api/calendar/upcoming – ближайшие 7 дней
+
+## Заявки 1x1 (для студента)
+
+POST /api/one-on-one – создать заявку
+GET /api/one-on-one – список заявок студента
+POST /api/one-on-one/approve – одобрить (только админ)
+POST /api/one-on-one/reject – отклонить (только админ)
+
+## Финальные проверки
+
+POST /api/final-checks/schedule – назначить (buddy)
+POST /api/final-checks/complete – завершить с результатом
+GET /api/final-checks/student/:student_id – список проверок студента
 
 ## Администрирование (требуют роль admin)
 
-GET /api/admin/users Список пользователей
-POST /api/admin/users Создание пользователя
-PUT /api/admin/users/:id Редактирование пользователя
-DELETE /api/admin/users/:id Удаление (soft delete)
-POST /api/admin/assign-buddy Назначение бадди студенту
-GET /api/admin/blocks Список блоков
-POST /api/admin/blocks Создание блока
-PUT /api/admin/blocks/:id Обновление блока
-DELETE /api/admin/blocks/:id Удаление блока
+## Пользователи (расширенное управление)
+
+GET /api/admin/users – список пользователей
+POST /api/admin/users – создание пользователя
+GET /api/admin/users/:user_id – детальная информация
+PUT /api/admin/users/:user_id – редактирование
+DELETE /api/admin/users/:user_id – soft delete
+POST /api/admin/users/:user_id/change-password – смена пароля
+GET /api/admin/users/:user_id/progress – прогресс студента по блокам
+POST /api/admin/users/:user_id/approve-block/:block_id – подтвердить блок (админ)
+
+### Назначение Buddy
+
+POST /api/admin/assign-buddy – привязать бадди к студенту
+
+### Roadmap блоки
+
+GET /api/admin/blocks – список блоков
+POST /api/admin/blocks – создать блок
+PUT /api/admin/blocks/:id – обновить
+DELETE /api/admin/blocks/:id – удалить (soft delete)
+
+### Материалы
+
+GET /api/admin/materials – список материалов (фильтр по block_id)
+POST /api/admin/materials – создать материал
+PUT /api/admin/materials/:id – обновить
+DELETE /api/admin/materials/:id – удалить (soft delete)
+PATCH /api/admin/materials/:id/status – включить/отключить (is_active)
+
+### Достижения
+
+GET /api/admin/achievements – все достижения
+POST /api/admin/achievements – создать
+PUT /api/admin/achievements/:id – обновить
+DELETE /api/admin/achievements/:id – удалить
+PATCH /api/admin/achievements/:id/status – включить/отключить
+GET /api/admin/achievements/:id/users – список пользователей, получивших достижение
+
+### Заявки 1x1 (админская панель)
+
+GET /api/admin/one-on-one – все заявки (с именем студента и балансом бонусов)
+POST /api/admin/one-on-one/:id/approve – одобрить (списывает 1000 бонусов)
+POST /api/admin/one-on-one/:id/reject – отклонить
+POST /api/admin/one-on-one/:id/complete – отметить завершённой
+
+### Статистика
+
+GET /api/admin/stats – общие метрики: количество пользователей, студентов, бадди, активных заявок 1x1, выданных достижений
 
 ## Модели данных (основные)
 

@@ -17,10 +17,8 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 
-// Create создаёт нового пользователя и его роли
 func (r *UserRepository) Create(user *models.User, roles []models.Role) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
-		// Генерируем UUID если пустой
 		if user.ID == "" {
 			user.ID = uuid.New().String()
 		}
@@ -31,7 +29,6 @@ func (r *UserRepository) Create(user *models.User, roles []models.Role) error {
 			return err
 		}
 
-		// Создаём записи ролей
 		for _, role := range roles {
 			userRole := models.UserRole{
 				UserID: user.ID,
@@ -45,7 +42,6 @@ func (r *UserRepository) Create(user *models.User, roles []models.Role) error {
 	})
 }
 
-// FindByLogin ищет пользователя по логину (с его ролями)
 func (r *UserRepository) FindByLogin(login string) (*models.User, []models.Role, error) {
 	var user models.User
 	err := r.db.Where("login = ? AND is_deleted = ?", login, false).First(&user).Error
@@ -68,7 +64,6 @@ func (r *UserRepository) FindByLogin(login string) (*models.User, []models.Role,
 	return &user, roles, nil
 }
 
-// FindByID ищет пользователя по ID
 func (r *UserRepository) FindByID(id string) (*models.User, error) {
 	var user models.User
 	err := r.db.Where("id = ? AND is_deleted = ?", id, false).First(&user).Error
@@ -81,13 +76,11 @@ func (r *UserRepository) FindByID(id string) (*models.User, error) {
 	return &user, nil
 }
 
-// Update обновляет данные пользователя
 func (r *UserRepository) Update(user *models.User) error {
 	user.UpdatedAt = time.Now()
 	return r.db.Save(user).Error
 }
 
-// SoftDelete помечает пользователя как удалённого
 func (r *UserRepository) SoftDelete(id string) error {
 	return r.db.Model(&models.User{}).
 		Where("id = ?", id).
