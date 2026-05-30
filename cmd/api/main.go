@@ -70,7 +70,7 @@ func main() {
 
 	blockApproveHandler := handlers.NewBlockApproveHandler(progressRepo, activityRepo)
 
-	// Админские хендлеры (расширенные)
+	// Админские хендлеры
 	adminUserHandler := handlers.NewAdminUserHandler(
 		userRepo,
 		authService,
@@ -114,6 +114,10 @@ func main() {
 			user, err := userRepo.FindByID(userID)
 			if err != nil {
 				c.JSON(500, gin.H{"error": "failed to fetch user"})
+				return
+			}
+			if user == nil {
+				c.JSON(404, gin.H{"error": "user not found"})
 				return
 			}
 			user.PasswordHash = ""
@@ -183,11 +187,9 @@ func main() {
 
 		protected.POST("/blocks/approve", blockApproveHandler.ApproveBlock)
 
-		// Админские роуты
 		adminGroup := protected.Group("/admin")
 		adminGroup.Use(middleware.RoleMiddleware("admin"))
 		{
-			// Пользователи
 			adminGroup.GET("/users", adminUserHandler.ListUsers)
 			adminGroup.POST("/users", adminUserHandler.CreateUser)
 			adminGroup.GET("/users/:user_id", adminUserHandler.GetUser)
@@ -196,38 +198,26 @@ func main() {
 			adminGroup.POST("/users/:user_id/change-password", adminUserHandler.ChangePassword)
 			adminGroup.GET("/users/:user_id/progress", adminUserHandler.GetUserProgress)
 			adminGroup.POST("/users/:user_id/approve-block/:block_id", adminUserHandler.ApproveBlock)
-
-			// Назначение buddy
 			adminGroup.POST("/assign-buddy", assignmentHandler.AssignBuddy)
-
-			// Roadmap блоки
 			adminGroup.GET("/blocks", adminRoadmapHandler.ListBlocks)
 			adminGroup.POST("/blocks", adminRoadmapHandler.CreateBlock)
 			adminGroup.PUT("/blocks/:id", adminRoadmapHandler.UpdateBlock)
 			adminGroup.DELETE("/blocks/:id", adminRoadmapHandler.DeleteBlock)
-
-			// Материалы
 			adminGroup.GET("/materials", adminMaterialHandler.ListMaterials)
 			adminGroup.POST("/materials", adminMaterialHandler.CreateMaterial)
 			adminGroup.PUT("/materials/:id", adminMaterialHandler.UpdateMaterial)
 			adminGroup.DELETE("/materials/:id", adminMaterialHandler.DeleteMaterial)
 			adminGroup.PATCH("/materials/:id/status", adminMaterialHandler.ToggleMaterialStatus)
-
-			// Достижения
 			adminGroup.GET("/achievements", adminAchievementHandler.ListAchievements)
 			adminGroup.POST("/achievements", adminAchievementHandler.CreateAchievement)
 			adminGroup.PUT("/achievements/:id", adminAchievementHandler.UpdateAchievement)
 			adminGroup.DELETE("/achievements/:id", adminAchievementHandler.DeleteAchievement)
 			adminGroup.PATCH("/achievements/:id/status", adminAchievementHandler.ToggleAchievementStatus)
 			adminGroup.GET("/achievements/:id/users", adminAchievementHandler.GetAchievementUsers)
-
-			// Заявки 1x1 (админ)
 			adminGroup.GET("/one-on-one", adminOneOnOneHandler.ListRequests)
 			adminGroup.POST("/one-on-one/:id/approve", adminOneOnOneHandler.Approve)
 			adminGroup.POST("/one-on-one/:id/reject", adminOneOnOneHandler.Reject)
 			adminGroup.POST("/one-on-one/:id/complete", adminOneOnOneHandler.Complete)
-
-			// Статистика
 			adminGroup.GET("/stats", adminStatsHandler.GetStats)
 		}
 

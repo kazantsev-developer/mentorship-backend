@@ -39,6 +39,7 @@ func NewAdminUserHandler(
 	}
 }
 
+// ListUsers возвращает список пользователей с их ролями
 func (h *AdminUserHandler) ListUsers(c *gin.Context) {
 	var users []models.User
 	includeDeleted := c.Query("deleted") == "true"
@@ -50,10 +51,25 @@ func (h *AdminUserHandler) ListUsers(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	for i := range users {
-		users[i].PasswordHash = ""
+
+	// Структура для ответа с ролями
+	type UserWithRoles struct {
+		models.User
+		Roles []string `json:"roles"`
 	}
-	c.JSON(http.StatusOK, users)
+	result := make([]UserWithRoles, 0, len(users))
+
+	for _, u := range users {
+		var roles []string
+		// Загружаем роли пользователя из таблицы user_roles
+		h.db.Table("user_roles").Where("user_id = ?", u.ID).Pluck("role", &roles)
+		u.PasswordHash = "" // не показываем хэш пароля
+		result = append(result, UserWithRoles{
+			User:  u,
+			Roles: roles,
+		})
+	}
+	c.JSON(http.StatusOK, result)
 }
 
 func (h *AdminUserHandler) CreateUser(c *gin.Context) {
@@ -231,7 +247,7 @@ func (h *AdminUserHandler) GetUserProgress(c *gin.Context) {
 func (h *AdminUserHandler) ApproveBlock(c *gin.Context) {
 	userID := c.Param("user_id")
 	blockID := c.Param("block_id")
-	adminID := c.GetString("userID") // текущий админ
+	adminID := c.GetString("userID")
 	if err := h.progressRepo.ConfirmBlock(userID, blockID, adminID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
