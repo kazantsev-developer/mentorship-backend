@@ -1,57 +1,135 @@
-arkdown
-
 # Платформа менторства по Go (Backend)
+
+Backend-часть платформы для студентов, наставников и администраторов. Реализована на Go с использованием Gin, GORM и PostgreSQL.
 
 ## Запуск через Docker Compose
 
-1. Склонируйте репозиторий и перейдите в папку проекта.
-2. Создайте файл `.env` на основе `.env.example` (или используйте переменные окружения в docker-compose.yml).
-3. Выполните:
+1. Склонируйте репозиторий и перейдите в папку проекта:
 
-   docker-compose up -d
-   Бэкенд будет доступен по адресу http://localhost:8080.
+```bash
+git clone https://github.com/kazantsev-developer/mentorship-backend.git
+cd mentorship-backend
+Скопируйте файл с переменными окружения:
 
-### Проверка работы
+cp .env.example .env
+При необходимости отредактируйте .env (пароли, JWT-секрет, настройки БД).
 
-/ping – health check
+Запустите контейнеры:
+docker-compose up -d
+Бэкенд будет доступен по адресу http://localhost:8080.
 
-Регистрация: POST /api/auth/register
-
-Логин: POST /api/auth/login
-
-Полный список эндпоинтов в handlers
-
-Демо-аккаунты (создаются через регистрацию)
-
-Студент: {"login":"student1","password":"123","roles":["student"]}
-
-Бадди: {"login":"buddy1","password":"123","roles":["buddy"]}
-
-Админ: {"login":"admin1","password":"admin123","roles":["admin"]}
-
-### Тестирование
-
-Запустите тестовый скрипт:
-
-chmod +x test_backend.sh
-./test_backend.sh
-Он проверит все основные сценарии.
-
-### Остановка
-
+Остановка
 docker-compose down
-Требования
-Docker и Docker Compose
 
-### Краткое описание ключевых файлов и их роли
+Health check: GET /ping {"message":"pong"}
 
-cmd/api/main.go - инициализация зависимостей, запуск Gin-сервера, регистрация маршрутов
-internal/config/config.go - загрузка .env, структура конфигурации (БД, JWT, порт)
-internal/models/ - Все GORM-модели (пользователи, блоки, материалы, прогресс, бонусы и т.д.)
-internal/repositories/ - CRUD-операции с БД (каждая таблица – свой репозиторий)
-internal/services/ - бизнес логика (расчёт прогресса, начисление бонусов, выдача достижений)
-internal/handlers/ - обработка HTTP-запросов, вызов сервисов, формирование JSON-ответов
-internal/middleware/auth.go - проверка JWT, извлечение userID и ролей из токена
-pkg/db/postgres.go - подключение к PostgreSQL, автоматические миграции (GORM)
-docker-compose.yml - описание сервисов (PostgreSQL + бэкенд)
-Dockerfile - многостадийная сборка Go-приложения
+Регистрация и логин
+
+# Регистрация
+curl -X POST http://localhost:8080/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"login":"test","password":"123","display_name":"Test","roles":["student"]}'
+
+# Логин
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"login":"test","password":"123"}'
+
+Демо-аккаунты уже созданы в базе
+Роль	Логин	Пароль
+Студент	test_student	123
+Бадди	test_buddy	123
+Админ	admin	123
+
+
+Технологии
+Go 1.25 (Alpine)
+Gin – HTTP-роутер
+GORM – ORM для PostgreSQL
+JWT – аутентификация (golang-jwt)
+Bcrypt – хэширование паролей
+Docker Compose – контейнеризация
+
+Основные эндпоинты
+Публичные
+POST	/api/auth/register	Регистрация
+POST	/api/auth/login	Вход (JWT-токен)
+Защищённые (требуют токен)
+
+Профиль
+
+GET	/api/user/profile	Текущий пользователь
+PUT	/api/user/profile	Обновление профиля
+GET	/api/user/:id/profile	Публичный профиль
+Roadmap и прогресс
+
+GET	/api/roadmap	Блоки и материалы с прогрессом
+POST	/api/materials/view	Отметка материала пройденным
+Бонусы и достижения
+
+GET	/api/bonus/balance	Баланс бонусов
+GET	/api/bonus/history	История операций
+POST	/api/bonus/convert	Конвертация 100 бонусов → 1%
+GET	/api/achievements	Список достижений с прогрессом
+Buddy (наставник)
+
+GET	/api/my-students	Студенты текущего бадди
+POST	/api/blocks/approve	Подтверждение блока
+GET	/api/buddy/students/:id	Данные студента
+GET	/api/buddy/students/:id/roadmap	Прогресс по блокам студента
+GET	/api/buddy/students/:id/activity	История активности студента
+
+Собеседования
+
+POST	/api/interviews/real	Добавление real-собеседования
+POST	/api/interviews/mock	Добавление mock-собеседования
+GET	/api/interviews/my	Список собеседований студента
+GET	/api/interviews/real	Общий каталог real
+
+Администрирование (требуют роль admin)
+
+GET	/api/admin/users	Список пользователей
+POST	/api/admin/users	Создание пользователя
+PUT	/api/admin/users/:id	Редактирование пользователя
+DELETE	/api/admin/users/:id	Удаление (soft delete)
+POST	/api/admin/assign-buddy	Назначение бадди студенту
+GET	/api/admin/blocks	Список блоков
+POST	/api/admin/blocks	Создание блока
+PUT	/api/admin/blocks/:id	Обновление блока
+DELETE	/api/admin/blocks/:id	Удаление блока
+
+Модели данных (основные)
+users – логин, пароль, отображаемое имя, telegram, дата начала обучения
+
+user_roles – связь пользователя с ролями (student, buddy, admin)
+
+student_buddy_assignments – назначение бадди студенту
+
+blocks – блоки roadmap (название, описание, порядок)
+
+materials – материалы (тип, content_type, URL, обязательность)
+
+material_progresses – отметка материалов студентами
+
+block_progresses – статус блока для студента
+
+achievements – достижения (название, бонус, условие)
+
+user_achievements – выданные достижения
+
+bonus_transactions – история бонусов
+
+interviews – собеседования (mock/real, компания, позиция, фидбэк)
+
+calendar_events – события календаря
+
+one_on_one_requests – заявки на 1x1
+
+final_checks – финальные проверки (техничка, прожарка)
+
+activity_events – лог активности пользователя
+
+CORS
+Разрешённые источники задаются переменной ALLOWED_ORIGINS(например, http://localhost:3000,http://185.75.189.130:3000).
+
+```
