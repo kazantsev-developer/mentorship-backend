@@ -1,3 +1,4 @@
+// Package services implements business logic for the mentorship platform
 package services
 
 import (
@@ -56,4 +57,16 @@ func (s *BonusService) ConvertBonusToDiscount(userID string, bonusAmount int) (i
 		return 0, err
 	}
 	return discount, nil
+}
+
+// SpendForOneOnOne deducts 1000 bonus points for a 1:1 session
+func (s *BonusService) SpendForOneOnOne(userID string, requestID string) (*models.BonusBalance, error) {
+	return s.repo.AddTransaction(
+		userID,
+		models.BonusTypeOneOnOneSpend,
+		-1000,
+		"1x1 session",
+		"one_on_one",
+		requestID,
+	)
 }

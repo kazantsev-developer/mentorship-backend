@@ -11,10 +11,11 @@ RUN go build -o mentorship-backend ./cmd/api
 
 FROM alpine:latest
 
+RUN apk --no-cache add ca-certificates
+
 WORKDIR /root/
 
 COPY --from=builder /app/mentorship-backend .
-COPY --from=builder /app/.env .env
 
 EXPOSE 8080
 

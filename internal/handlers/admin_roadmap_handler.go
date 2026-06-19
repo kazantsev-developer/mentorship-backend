@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// AdminRoadmapHandler handles administrative operations on roadmap blocks
+// AdminRoadmapHandler handles administrative operations on roadmap blocks.
 type AdminRoadmapHandler struct {
 	db *gorm.DB
 }
