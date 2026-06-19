@@ -12,7 +12,7 @@ Go mentorship platform backend. Built with Go, Gin, GORM, and PostgreSQL. Provid
 
 1. Clone the repository and navigate to the project root directory:
    ```bash
-   git clone https://github.com
+   git clone https://github.com/kazantsev-developer/mentorship-backend.git
    cd mentorship-backend
    ```
 
