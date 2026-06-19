@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+// User represents a registered user of the mentorship platform
 type User struct {
 	ID                string `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
 	Login             string `gorm:"unique;not null"`

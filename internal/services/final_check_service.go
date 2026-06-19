@@ -9,14 +9,17 @@ import (
 	"gorm.io/gorm"
 )
 
+// FinalCheckService manages final check scheduling and completion
 type FinalCheckService struct {
 	db *gorm.DB
 }
 
+// NewFinalCheckService returns a new FinalCheckService instance
 func NewFinalCheckService(db *gorm.DB) *FinalCheckService {
 	return &FinalCheckService{db: db}
 }
 
+// ScheduleFinalCheck creates a new scheduled final check
 func (s *FinalCheckService) ScheduleFinalCheck(studentID, buddyID string, checkType models.FinalCheckType, scheduledAt time.Time) (*models.FinalCheck, error) {
 	check := models.FinalCheck{
 		ID:          uuid.New().String(),
@@ -32,6 +35,7 @@ func (s *FinalCheckService) ScheduleFinalCheck(studentID, buddyID string, checkT
 	return &check, err
 }
 
+// CompleteFinalCheck finalizes a final check as passed or failed
 func (s *FinalCheckService) CompleteFinalCheck(checkID string, passed bool) error {
 	var check models.FinalCheck
 	if err := s.db.First(&check, "id = ?", checkID).Error; err != nil {
@@ -51,6 +55,7 @@ func (s *FinalCheckService) CompleteFinalCheck(checkID string, passed bool) erro
 	return s.db.Save(&check).Error
 }
 
+// GetStudentFinalChecks returns all final checks for a student ordered by most recent
 func (s *FinalCheckService) GetStudentFinalChecks(studentID string) ([]models.FinalCheck, error) {
 	var checks []models.FinalCheck
 	err := s.db.Where("student_id = ?", studentID).Order("created_at desc").Find(&checks).Error

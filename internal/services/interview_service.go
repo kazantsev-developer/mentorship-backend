@@ -9,14 +9,17 @@ import (
 	"gorm.io/gorm"
 )
 
+// InterviewService manages interview records for students and buddies
 type InterviewService struct {
 	db *gorm.DB
 }
 
+// NewInterviewService returns a new InterviewService instance
 func NewInterviewService(db *gorm.DB) *InterviewService {
 	return &InterviewService{db: db}
 }
 
+// InterviewInput contains data for creating an interview
 type InterviewInput struct {
 	URL      string
 	Company  string
@@ -26,6 +29,7 @@ type InterviewInput struct {
 	Date     time.Time
 }
 
+// CreateReal records a real interview for a student
 func (s *InterviewService) CreateReal(studentID string, input InterviewInput) (*models.Interview, error) {
 	interview := models.Interview{
 		ID:        uuid.New().String(),
@@ -41,12 +45,12 @@ func (s *InterviewService) CreateReal(studentID string, input InterviewInput) (*
 		Result:    "pending",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
-		// BuddyID остаётся nil, что соответствует NULL в БД
 	}
 	err := s.db.Create(&interview).Error
 	return &interview, err
 }
 
+// CreateMock schedules a mock interview for a student with a buddy
 func (s *InterviewService) CreateMock(buddyID, studentID string, input InterviewInput) (*models.Interview, error) {
 	buddyIDPtr := &buddyID
 	interview := models.Interview{
@@ -68,6 +72,7 @@ func (s *InterviewService) CreateMock(buddyID, studentID string, input Interview
 	return &interview, err
 }
 
+// CompleteMock finalizes a mock interview with feedback
 func (s *InterviewService) CompleteMock(interviewID string, feedback string) error {
 	var interview models.Interview
 	if err := s.db.First(&interview, "id = ?", interviewID).Error; err != nil {
@@ -82,6 +87,7 @@ func (s *InterviewService) CompleteMock(interviewID string, feedback string) err
 	return s.db.Save(&interview).Error
 }
 
+// GetUserInterviews returns interviews for a user as a student or as a buddy
 func (s *InterviewService) GetUserInterviews(userID string, isBuddy bool) ([]models.Interview, error) {
 	var interviews []models.Interview
 	query := s.db.Where("student_id = ?", userID)
@@ -92,6 +98,7 @@ func (s *InterviewService) GetUserInterviews(userID string, isBuddy bool) ([]mod
 	return interviews, err
 }
 
+// GetAllRealInterviews returns all real interviews across all students
 func (s *InterviewService) GetAllRealInterviews() ([]models.Interview, error) {
 	var interviews []models.Interview
 	err := s.db.Where("type = ?", models.InterviewReal).Order("date desc").Find(&interviews).Error

@@ -8,14 +8,17 @@ import (
 	"gorm.io/gorm"
 )
 
+// CalendarService manages calendar events for students and buddies
 type CalendarService struct {
 	db *gorm.DB
 }
 
+// NewCalendarService returns a new CalendarService instance
 func NewCalendarService(db *gorm.DB) *CalendarService {
 	return &CalendarService{db: db}
 }
 
+// CreateEvent creates a new calendar event
 func (s *CalendarService) CreateEvent(buddyID, studentID, title, eventType, description string, start, end *time.Time, reminder bool) (*models.CalendarEvent, error) {
 	event := models.CalendarEvent{
 		ID:              uuid.New().String(),
@@ -34,18 +37,21 @@ func (s *CalendarService) CreateEvent(buddyID, studentID, title, eventType, desc
 	return &event, err
 }
 
+// GetEventsForStudent returns all events for a given student
 func (s *CalendarService) GetEventsForStudent(studentID string) ([]models.CalendarEvent, error) {
 	var events []models.CalendarEvent
 	err := s.db.Where("student_id = ?", studentID).Order("start_datetime asc").Find(&events).Error
 	return events, err
 }
 
+// GetEventsForBuddy returns all events for a given buddy
 func (s *CalendarService) GetEventsForBuddy(buddyID string) ([]models.CalendarEvent, error) {
 	var events []models.CalendarEvent
 	err := s.db.Where("buddy_id = ?", buddyID).Order("start_datetime asc").Find(&events).Error
 	return events, err
 }
 
+// GetUpcomingEvents returns upcoming events for a user within the specified number of days
 func (s *CalendarService) GetUpcomingEvents(userID string, days int) ([]models.CalendarEvent, error) {
 	now := time.Now()
 	limit := now.AddDate(0, 0, days)

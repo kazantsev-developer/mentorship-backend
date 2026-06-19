@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+// BlockStatus defines the progress status of a roadmap block for a student
 type BlockStatus string
 
 const (
@@ -13,7 +14,7 @@ const (
 	BlockApproved                 BlockStatus = "approved"
 )
 
-// MaterialProgress – отметка о просмотре материала студентом
+// MaterialProgress records a student's viewed material
 type MaterialProgress struct {
 	ID         string    `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
 	StudentID  string    `gorm:"type:uuid;not null;index"`
@@ -22,13 +23,13 @@ type MaterialProgress struct {
 	CreatedAt  time.Time
 }
 
-// BlockProgress – статус блока для студента
+// BlockProgress tracks a student's block status and approval
 type BlockProgress struct {
 	ID         string      `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
 	StudentID  string      `gorm:"type:uuid;not null;index"`
 	BlockID    string      `gorm:"type:uuid;not null;index"`
 	Status     BlockStatus `gorm:"type:varchar(30);default:'not_started'"`
-	ApprovedBy *string     `gorm:"type:uuid"` // ID пользователя (buddy/admin), кто подтвердил
+	ApprovedBy *string     `gorm:"type:uuid"`
 	ApprovedAt *time.Time
 	CreatedAt  time.Time
 	UpdatedAt  time.Time

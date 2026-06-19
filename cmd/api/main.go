@@ -58,14 +58,12 @@ func main() {
 
 	profileHandler := handlers.NewProfileHandler(userRepo)
 
-	// Дополнительные хендлеры
 	blockApproveHandler := handlers.NewBlockApproveHandler(progressRepo)
 	adminUserHandler := handlers.NewAdminUserHandler(userRepo, authService)
 	adminRoadmapHandler := handlers.NewAdminRoadmapHandler(db.GetDB())
 
 	r := gin.Default()
 
-	// CORS middleware
 	r.Use(func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -78,7 +76,6 @@ func main() {
 		c.Next()
 	})
 
-	// Публичные маршруты
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "pong"})
 	})
@@ -89,11 +86,9 @@ func main() {
 		auth.POST("/login", authHandler.Login)
 	}
 
-	// Защищённые маршруты
 	protected := r.Group("/api")
 	protected.Use(middleware.AuthMiddleware(cfg))
 	{
-		// Профиль
 		protected.GET("/user/profile", func(c *gin.Context) {
 			userID := c.GetString("userID")
 			user, err := userRepo.FindByID(userID)
@@ -107,11 +102,9 @@ func main() {
 		protected.PUT("/user/profile", profileHandler.UpdateProfile)
 		protected.GET("/user/:user_id/profile", profileHandler.PublicProfile)
 
-		// Roadmap и прогресс
 		protected.GET("/roadmap", roadmapHandler.GetRoadmap)
 		protected.POST("/materials/view", progressHandler.MarkMaterialViewed)
 
-		// Бонусы и достижения
 		protected.GET("/bonus/balance", func(c *gin.Context) {
 			userID := c.GetString("userID")
 			bal, err := bonusService.GetBalance(userID)
@@ -168,52 +161,42 @@ func main() {
 			c.JSON(200, result)
 		})
 
-		// Подтверждение блока (Buddy)
 		protected.POST("/blocks/approve", blockApproveHandler.ApproveBlock)
 
-		// Админские маршруты (только для админов)
 		adminGroup := protected.Group("/admin")
 		adminGroup.Use(middleware.RoleMiddleware("admin"))
 		{
 			adminGroup.POST("/assign-buddy", assignmentHandler.AssignBuddy)
 
-			// Управление пользователями
 			adminGroup.GET("/users", adminUserHandler.ListUsers)
 			adminGroup.POST("/users", adminUserHandler.CreateUser)
 			adminGroup.PUT("/users/:user_id", adminUserHandler.UpdateUser)
 			adminGroup.DELETE("/users/:user_id", adminUserHandler.DeleteUser)
 			adminGroup.POST("/users/:user_id/change-password", adminUserHandler.ChangePassword)
 
-			// Управление блоками
 			adminGroup.GET("/blocks", adminRoadmapHandler.ListBlocks)
 			adminGroup.POST("/blocks", adminRoadmapHandler.CreateBlock)
 			adminGroup.PUT("/blocks/:id", adminRoadmapHandler.UpdateBlock)
 			adminGroup.DELETE("/blocks/:id", adminRoadmapHandler.DeleteBlock)
-			// Аналогично можно добавить маршруты для материалов и достижений
 		}
 
-		// Buddy: свои ученики
 		protected.GET("/my-students", assignmentHandler.MyStudents)
 
-		// Собеседования
 		protected.POST("/interviews/real", interviewHandler.CreateReal)
 		protected.POST("/interviews/mock", interviewHandler.CreateMock)
 		protected.POST("/interviews/mock/complete", interviewHandler.CompleteMock)
 		protected.GET("/interviews/my", interviewHandler.MyInterviews)
 		protected.GET("/interviews/real", interviewHandler.AllReal)
 
-		// Календарь
 		protected.POST("/calendar/events", calendarHandler.CreateEvent)
 		protected.GET("/calendar/events", calendarHandler.MyEvents)
 		protected.GET("/calendar/upcoming", calendarHandler.UpcomingEvents)
 
-		// Заявки 1x1
 		protected.POST("/one-on-one", oneOnOneHandler.CreateRequest)
 		protected.GET("/one-on-one", oneOnOneHandler.ListRequests)
 		protected.POST("/one-on-one/approve", oneOnOneHandler.Approve)
 		protected.POST("/one-on-one/reject", oneOnOneHandler.Reject)
 
-		// Финальные проверки
 		protected.POST("/final-checks/schedule", finalCheckHandler.Schedule)
 		protected.POST("/final-checks/complete", finalCheckHandler.Complete)
 		protected.GET("/final-checks/student/:student_id", finalCheckHandler.GetForStudent)

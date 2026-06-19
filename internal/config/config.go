@@ -1,3 +1,4 @@
+// Package config provides application configuration loading from environment
 package config
 
 import (
@@ -9,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// Config aggregates all configuration sections
 type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
@@ -16,11 +18,13 @@ type Config struct {
 	Admin    AdminConfig
 }
 
+// ServerConfig contains server-related settings
 type ServerConfig struct {
 	Port string
 	Mode string
 }
 
+// DatabaseConfig contains database connection parameters
 type DatabaseConfig struct {
 	Host     string
 	Port     string
@@ -30,22 +34,26 @@ type DatabaseConfig struct {
 	SSLMode  string
 }
 
+// JWTConfig contains JSON Web Token settings
 type JWTConfig struct {
 	Secret      string
 	ExpiresHour int
 	ExpiresAt   time.Duration
 }
 
+// AdminConfig contains default admin credentials
 type AdminConfig struct {
 	Login    string
 	Password string
 }
 
+// AppConfig holds the loaded application configuration
 var AppConfig *Config
 
+// Load reads configuration from environment variables and optional .env file
 func Load() (*Config, error) {
 	if err := godotenv.Load(); err != nil {
-		logrus.Warn("No .env file found, using system env")
+		logrus.Warn("no .env file found, using system env")
 	}
 
 	cfg := &Config{
@@ -77,6 +85,7 @@ func Load() (*Config, error) {
 	return cfg, nil
 }
 
+// GetDSN returns the PostgreSQL connection string
 func (c *Config) GetDSN() string {
 	return "host=" + c.Database.Host +
 		" port=" + c.Database.Port +

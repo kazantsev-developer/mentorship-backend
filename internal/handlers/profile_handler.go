@@ -7,14 +7,17 @@ import (
 	"github.com/kazantsev/mentorship-backend/internal/repositories"
 )
 
+// ProfileHandler handles user profile operations
 type ProfileHandler struct {
 	userRepo *repositories.UserRepository
 }
 
+// NewProfileHandler returns a new ProfileHandler instance
 func NewProfileHandler(userRepo *repositories.UserRepository) *ProfileHandler {
 	return &ProfileHandler{userRepo: userRepo}
 }
 
+// UpdateProfile updates the authenticated user's profile
 func (h *ProfileHandler) UpdateProfile(c *gin.Context) {
 	userID := c.GetString("userID")
 	var updates struct {
@@ -24,7 +27,7 @@ func (h *ProfileHandler) UpdateProfile(c *gin.Context) {
 		IsProfilePrivate bool   `json:"is_profile_private"`
 	}
 	if err := c.ShouldBindJSON(&updates); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
 	user, err := h.userRepo.FindByID(userID)
@@ -39,13 +42,14 @@ func (h *ProfileHandler) UpdateProfile(c *gin.Context) {
 	user.About = updates.About
 	user.IsProfilePrivate = updates.IsProfilePrivate
 	if err := h.userRepo.Update(user); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update profile"})
 		return
 	}
 	user.PasswordHash = ""
 	c.JSON(http.StatusOK, user)
 }
 
+// PublicProfile returns public profile information for a user by ID
 func (h *ProfileHandler) PublicProfile(c *gin.Context) {
 	userID := c.Param("user_id")
 	user, err := h.userRepo.FindByID(userID)

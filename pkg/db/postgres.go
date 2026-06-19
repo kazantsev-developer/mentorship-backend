@@ -1,3 +1,4 @@
+// Package db provides database connection and migration utilities
 package db
 
 import (
@@ -11,8 +12,10 @@ import (
 	"gorm.io/gorm/logger"
 )
 
+// DB holds the global database instance
 var DB *gorm.DB
 
+// InitDB initializes the database connection and runs auto-migration
 func InitDB(cfg *config.Config) error {
 	dsn := cfg.GetDSN()
 	var err error
@@ -23,7 +26,6 @@ func InitDB(cfg *config.Config) error {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	// Автомиграция
 	if err := DB.AutoMigrate(
 		&models.User{},
 		&models.UserRole{},
@@ -45,10 +47,11 @@ func InitDB(cfg *config.Config) error {
 		return fmt.Errorf("failed to migrate: %w", err)
 	}
 
-	log.Println("Database connected and migrated successfully")
+	log.Println("database connected and migrated successfully")
 	return nil
 }
 
+// GetDB returns the global database instance
 func GetDB() *gorm.DB {
 	return DB
 }

@@ -10,18 +10,19 @@ import (
 	"gorm.io/gorm"
 )
 
+// AssignmentService manages buddy-student assignments
 type AssignmentService struct {
 	db       *gorm.DB
 	userRepo *repositories.UserRepository
 }
 
+// NewAssignmentService returns a new AssignmentService instance
 func NewAssignmentService(db *gorm.DB, userRepo *repositories.UserRepository) *AssignmentService {
 	return &AssignmentService{db: db, userRepo: userRepo}
 }
 
-// AssignBuddyToStudent назначает студенту buddy (удаляет старое назначение, если было)
+// AssignBuddyToStudent links a buddy to a student, replacing any existing assignment
 func (s *AssignmentService) AssignBuddyToStudent(studentID, buddyID string) error {
-	// Проверяем, что student и buddy существуют и имеют соответствующие роли
 	student, err := s.userRepo.FindByID(studentID)
 	if err != nil {
 		return err
@@ -36,7 +37,6 @@ func (s *AssignmentService) AssignBuddyToStudent(studentID, buddyID string) erro
 	if buddy == nil {
 		return errors.New("buddy not found")
 	}
-	// Удаляем старые назначения
 	if err := s.db.Where("student_id = ?", studentID).Delete(&models.StudentBuddyAssignment{}).Error; err != nil {
 		return err
 	}
@@ -49,7 +49,7 @@ func (s *AssignmentService) AssignBuddyToStudent(studentID, buddyID string) erro
 	return s.db.Create(&assignment).Error
 }
 
-// GetBuddyForStudent возвращает buddy студента
+// GetBuddyForStudent returns the assigned buddy for a student
 func (s *AssignmentService) GetBuddyForStudent(studentID string) (*models.User, error) {
 	var assignment models.StudentBuddyAssignment
 	err := s.db.Where("student_id = ?", studentID).First(&assignment).Error
@@ -62,7 +62,7 @@ func (s *AssignmentService) GetBuddyForStudent(studentID string) (*models.User, 
 	return s.userRepo.FindByID(assignment.BuddyID)
 }
 
-// GetStudentsForBuddy возвращает список студентов, закреплённых за buddy
+// GetStudentsForBuddy returns all students assigned to a buddy
 func (s *AssignmentService) GetStudentsForBuddy(buddyID string) ([]models.User, error) {
 	var assignments []models.StudentBuddyAssignment
 	err := s.db.Where("buddy_id = ?", buddyID).Find(&assignments).Error

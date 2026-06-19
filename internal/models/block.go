@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+// Block represents a roadmap block containing materials
 type Block struct {
 	ID          string `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
 	Title       string `gorm:"not null"`
@@ -14,6 +15,5 @@ type Block struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 
-	// Связь с материалами
 	Materials []Material `gorm:"foreignKey:BlockID"`
 }

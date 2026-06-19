@@ -5,15 +5,17 @@ import (
 	"gorm.io/gorm"
 )
 
+// BlockRepository handles database operations for roadmap blocks
 type BlockRepository struct {
 	db *gorm.DB
 }
 
+// NewBlockRepository returns a new BlockRepository instance
 func NewBlockRepository(db *gorm.DB) *BlockRepository {
 	return &BlockRepository{db: db}
 }
 
-// GetAllActive возвращает все активные блоки с материалами, отсортированные по SortOrder
+// GetAllActive returns all active blocks with materials ordered by sort order
 func (r *BlockRepository) GetAllActive() ([]models.Block, error) {
 	var blocks []models.Block
 	err := r.db.Where("is_active = ? AND deleted_at IS NULL", true).
@@ -23,7 +25,7 @@ func (r *BlockRepository) GetAllActive() ([]models.Block, error) {
 	return blocks, err
 }
 
-// GetByID возвращает блок по ID с его материалами
+// GetByID returns a block by ID with its materials
 func (r *BlockRepository) GetByID(id string) (*models.Block, error) {
 	var block models.Block
 	err := r.db.Where("id = ? AND deleted_at IS NULL", id).

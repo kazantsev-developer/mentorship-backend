@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+// MaterialType defines the type of a learning material
 type MaterialType string
 
 const (
@@ -13,6 +14,7 @@ const (
 	MaterialHomework  MaterialType = "homework"
 )
 
+// Material represents a learning material within a roadmap block
 type Material struct {
 	ID           string `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
 	BlockID      string `gorm:"type:uuid;not null;index"`

@@ -9,11 +9,13 @@ import (
 	"github.com/kazantsev/mentorship-backend/internal/utils"
 )
 
+// AuthService handles user authentication and registration
 type AuthService struct {
 	userRepo *repositories.UserRepository
 	cfg      *config.Config
 }
 
+// NewAuthService returns a new AuthService instance
 func NewAuthService(userRepo *repositories.UserRepository, cfg *config.Config) *AuthService {
 	return &AuthService{
 		userRepo: userRepo,
@@ -21,6 +23,7 @@ func NewAuthService(userRepo *repositories.UserRepository, cfg *config.Config) *
 	}
 }
 
+// RegisterRequest contains the data required to register a new user
 type RegisterRequest struct {
 	Login            string
 	Password         string
@@ -29,8 +32,8 @@ type RegisterRequest struct {
 	Roles            []models.Role
 }
 
+// Register creates a new user account with the provided details
 func (s *AuthService) Register(req RegisterRequest) (*models.User, error) {
-	// Проверяем, существует ли пользователь
 	existing, _, _ := s.userRepo.FindByLogin(req.Login)
 	if existing != nil {
 		return nil, errors.New("user already exists")
@@ -56,17 +59,20 @@ func (s *AuthService) Register(req RegisterRequest) (*models.User, error) {
 	return user, nil
 }
 
+// LoginRequest contains credentials for authentication
 type LoginRequest struct {
 	Login    string
 	Password string
 }
 
+// LoginResponse contains the result of a successful authentication
 type LoginResponse struct {
 	Token string
 	User  *models.User
 	Roles []models.Role
 }
 
+// Login authenticates a user and returns a JWT token
 func (s *AuthService) Login(req LoginRequest) (*LoginResponse, error) {
 	user, roles, err := s.userRepo.FindByLogin(req.Login)
 	if err != nil {

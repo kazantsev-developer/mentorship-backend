@@ -10,15 +10,18 @@ import (
 	"github.com/kazantsev/mentorship-backend/internal/utils"
 )
 
+// AdminUserHandler handles administrative operations on user accounts
 type AdminUserHandler struct {
 	userRepo    *repositories.UserRepository
 	authService *services.AuthService
 }
 
+// NewAdminUserHandler returns a new AdminUserHandler instance
 func NewAdminUserHandler(userRepo *repositories.UserRepository, authService *services.AuthService) *AdminUserHandler {
 	return &AdminUserHandler{userRepo: userRepo, authService: authService}
 }
 
+// ListUsers returns all users, optionally including deleted ones
 func (h *AdminUserHandler) ListUsers(c *gin.Context) {
 	var users []models.User
 	includeDeleted := c.Query("deleted") == "true"
@@ -27,7 +30,7 @@ func (h *AdminUserHandler) ListUsers(c *gin.Context) {
 		query = query.Where("is_deleted = ?", false)
 	}
 	if err := query.Find(&users).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch users"})
 		return
 	}
 	for i := range users {
@@ -36,6 +39,7 @@ func (h *AdminUserHandler) ListUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, users)
 }
 
+// CreateUser registers a new user with the given profile and roles
 func (h *AdminUserHandler) CreateUser(c *gin.Context) {
 	var req struct {
 		Login             string   `json:"login" binding:"required"`
@@ -46,7 +50,7 @@ func (h *AdminUserHandler) CreateUser(c *gin.Context) {
 		LearningStartedAt *string  `json:"learning_started_at"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
 	var roles []models.Role
@@ -72,16 +76,15 @@ func (h *AdminUserHandler) CreateUser(c *gin.Context) {
 	}
 	user, err := h.authService.Register(regReq)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to create user"})
 		return
 	}
 
-	if req.LearningStartedAt != nil && *req.LearningStartedAt != "" {
-	}
 	user.PasswordHash = ""
 	c.JSON(http.StatusCreated, user)
 }
 
+// UpdateUser modifies profile fields of an existing user
 func (h *AdminUserHandler) UpdateUser(c *gin.Context) {
 	userID := c.Param("user_id")
 	var updates struct {
@@ -93,7 +96,7 @@ func (h *AdminUserHandler) UpdateUser(c *gin.Context) {
 		LearningStartedAt *string `json:"learning_started_at"`
 	}
 	if err := c.ShouldBindJSON(&updates); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
 	user, err := h.userRepo.FindByID(userID)
@@ -117,29 +120,31 @@ func (h *AdminUserHandler) UpdateUser(c *gin.Context) {
 		user.IsProfilePrivate = *updates.IsProfilePrivate
 	}
 	if err := h.userRepo.Update(user); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update user"})
 		return
 	}
 	user.PasswordHash = ""
 	c.JSON(http.StatusOK, user)
 }
 
+// DeleteUser soft-deletes a user by ID
 func (h *AdminUserHandler) DeleteUser(c *gin.Context) {
 	userID := c.Param("user_id")
 	if err := h.userRepo.SoftDelete(userID); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete user"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"status": "deleted"})
 }
 
+// ChangePassword sets a new password for the specified user
 func (h *AdminUserHandler) ChangePassword(c *gin.Context) {
 	userID := c.Param("user_id")
 	var req struct {
 		NewPassword string `json:"new_password" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
 	user, err := h.userRepo.FindByID(userID)
@@ -149,12 +154,12 @@ func (h *AdminUserHandler) ChangePassword(c *gin.Context) {
 	}
 	hashed, err := utils.HashPassword(req.NewPassword)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to hash password"})
 		return
 	}
 	user.PasswordHash = hashed
 	if err := h.userRepo.Update(user); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update password"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"status": "password updated"})

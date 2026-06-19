@@ -1,9 +1,11 @@
+// Package models defines data structures for the mentorship platform
 package models
 
 import (
 	"time"
 )
 
+// Achievement represents an unlockable achievement with conditions and rewards
 type Achievement struct {
 	ID              string `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
 	Title           string `gorm:"not null"`
@@ -18,6 +20,7 @@ type Achievement struct {
 	UpdatedAt       time.Time
 }
 
+// UserAchievement tracks which achievements have been awarded to a user
 type UserAchievement struct {
 	ID            string    `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
 	UserID        string    `gorm:"type:uuid;not null;index"`

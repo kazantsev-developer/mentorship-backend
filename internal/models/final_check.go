@@ -2,6 +2,7 @@ package models
 
 import "time"
 
+// FinalCheckType represents the type of a final check
 type FinalCheckType string
 
 const (
@@ -9,6 +10,7 @@ const (
 	FinalRoast     FinalCheckType = "final_roast"
 )
 
+// FinalCheck stores information about a final assessment
 type FinalCheck struct {
 	ID          string         `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
 	StudentID   string         `gorm:"type:uuid;not null;index"`

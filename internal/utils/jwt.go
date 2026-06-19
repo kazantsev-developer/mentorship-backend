@@ -1,3 +1,4 @@
+// Package utils provides shared utilities such as JWT token handling
 package utils
 
 import (
@@ -7,6 +8,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// JWTClaims represents the custom claims embedded in access tokens
 type JWTClaims struct {
 	UserID string   `json:"user_id"`
 	Login  string   `json:"login"`
@@ -14,6 +16,7 @@ type JWTClaims struct {
 	jwt.RegisteredClaims
 }
 
+// GenerateJWT creates a signed JWT token for the given user identity
 func GenerateJWT(userID, login string, roles []string, secret string, expires time.Duration) (string, error) {
 	claims := JWTClaims{
 		UserID: userID,
@@ -28,6 +31,7 @@ func GenerateJWT(userID, login string, roles []string, secret string, expires ti
 	return token.SignedString([]byte(secret))
 }
 
+// ParseJWT validates and extracts claims from a JWT token string
 func ParseJWT(tokenStr, secret string) (*JWTClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenStr, &JWTClaims{}, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {

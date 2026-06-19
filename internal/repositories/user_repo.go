@@ -9,18 +9,19 @@ import (
 	"gorm.io/gorm"
 )
 
+// UserRepository handles database operations for user accounts and roles
 type UserRepository struct {
 	db *gorm.DB
 }
 
+// NewUserRepository returns a new UserRepository instance
 func NewUserRepository(db *gorm.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 
-// Create создаёт нового пользователя и его роли
+// Create inserts a new user along with their roles within a transaction
 func (r *UserRepository) Create(user *models.User, roles []models.Role) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
-		// Генерируем UUID если пустой
 		if user.ID == "" {
 			user.ID = uuid.New().String()
 		}
@@ -31,7 +32,6 @@ func (r *UserRepository) Create(user *models.User, roles []models.Role) error {
 			return err
 		}
 
-		// Создаём записи ролей
 		for _, role := range roles {
 			userRole := models.UserRole{
 				UserID: user.ID,
@@ -45,7 +45,7 @@ func (r *UserRepository) Create(user *models.User, roles []models.Role) error {
 	})
 }
 
-// FindByLogin ищет пользователя по логину (с его ролями)
+// FindByLogin looks up a non-deleted user by login and returns their roles
 func (r *UserRepository) FindByLogin(login string) (*models.User, []models.Role, error) {
 	var user models.User
 	err := r.db.Where("login = ? AND is_deleted = ?", login, false).First(&user).Error
@@ -68,7 +68,7 @@ func (r *UserRepository) FindByLogin(login string) (*models.User, []models.Role,
 	return &user, roles, nil
 }
 
-// FindByID ищет пользователя по ID
+// FindByID looks up a non-deleted user by ID
 func (r *UserRepository) FindByID(id string) (*models.User, error) {
 	var user models.User
 	err := r.db.Where("id = ? AND is_deleted = ?", id, false).First(&user).Error
@@ -81,19 +81,20 @@ func (r *UserRepository) FindByID(id string) (*models.User, error) {
 	return &user, nil
 }
 
-// Update обновляет данные пользователя
+// Update saves changes to an existing user
 func (r *UserRepository) Update(user *models.User) error {
 	user.UpdatedAt = time.Now()
 	return r.db.Save(user).Error
 }
 
-// SoftDelete помечает пользователя как удалённого
+// SoftDelete marks a user as deleted
 func (r *UserRepository) SoftDelete(id string) error {
 	return r.db.Model(&models.User{}).
 		Where("id = ?", id).
 		Update("is_deleted", true).Error
 }
 
+// GetDB returns the underlying database instance
 func (r *UserRepository) GetDB() *gorm.DB {
 	return r.db
 }

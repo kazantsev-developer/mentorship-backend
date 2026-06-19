@@ -2,6 +2,7 @@ package models
 
 import "time"
 
+// CalendarEvent represents a scheduled calendar event for a student and buddy
 type CalendarEvent struct {
 	ID              string `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
 	Title           string `gorm:"not null"`

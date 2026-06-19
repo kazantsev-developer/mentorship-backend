@@ -7,20 +7,21 @@ import (
 	"gorm.io/gorm"
 )
 
+// ProgressRepository handles database operations for student progress
 type ProgressRepository struct {
 	db *gorm.DB
 }
 
+// NewProgressRepository returns a new ProgressRepository instance
 func NewProgressRepository(db *gorm.DB) *ProgressRepository {
 	return &ProgressRepository{db: db}
 }
 
-// MarkMaterialViewed отмечает материал как просмотренный (если ещё не отмечен)
+// MarkMaterialViewed records a material as viewed by a student if not already recorded
 func (r *ProgressRepository) MarkMaterialViewed(studentID, materialID string) error {
 	var existing models.MaterialProgress
 	err := r.db.Where("student_id = ? AND material_id = ?", studentID, materialID).First(&existing).Error
 	if err == nil {
-		// уже отмечен
 		return nil
 	}
 	if err != gorm.ErrRecordNotFound {
@@ -34,7 +35,7 @@ func (r *ProgressRepository) MarkMaterialViewed(studentID, materialID string) er
 	return r.db.Create(&mp).Error
 }
 
-// GetViewedMaterialIDs возвращает список ID материалов, просмотренных студентом
+// GetViewedMaterialIDs returns IDs of materials viewed by a student
 func (r *ProgressRepository) GetViewedMaterialIDs(studentID string) ([]string, error) {
 	var ids []string
 	err := r.db.Model(&models.MaterialProgress{}).
@@ -43,7 +44,7 @@ func (r *ProgressRepository) GetViewedMaterialIDs(studentID string) ([]string, e
 	return ids, err
 }
 
-// GetBlockProgress возвращает текущий статус блока для студента
+// GetBlockProgress returns the block progress for a student
 func (r *ProgressRepository) GetBlockProgress(studentID, blockID string) (*models.BlockProgress, error) {
 	var bp models.BlockProgress
 	err := r.db.Where("student_id = ? AND block_id = ?", studentID, blockID).First(&bp).Error
@@ -56,7 +57,7 @@ func (r *ProgressRepository) GetBlockProgress(studentID, blockID string) (*model
 	return &bp, nil
 }
 
-// CreateOrUpdateBlockProgress создаёт или обновляет статус блока
+// CreateOrUpdateBlockProgress creates or updates a block progress record
 func (r *ProgressRepository) CreateOrUpdateBlockProgress(bp *models.BlockProgress) error {
 	var existing models.BlockProgress
 	err := r.db.Where("student_id = ? AND block_id = ?", bp.StudentID, bp.BlockID).First(&existing).Error
@@ -71,7 +72,7 @@ func (r *ProgressRepository) CreateOrUpdateBlockProgress(bp *models.BlockProgres
 	return err
 }
 
-// ConfirmBlock подтверждает блок (buddy/admin)
+// ConfirmBlock approves a block for a student
 func (r *ProgressRepository) ConfirmBlock(studentID, blockID, approvedBy string) error {
 	bp := models.BlockProgress{
 		StudentID:  studentID,

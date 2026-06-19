@@ -2,6 +2,7 @@ package models
 
 import "time"
 
+// ActivityEvent records an activity log entry for a user
 type ActivityEvent struct {
 	ID         string  `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
 	UserID     string  `gorm:"type:uuid;not null;index"`
