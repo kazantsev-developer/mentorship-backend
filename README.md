@@ -1,75 +1,96 @@
 # Go Mentorship Platform (Backend)
 
-Internal platform for managing the Go mentorship program. It provides a REST API for students, buddies, and administrators to track roadmaps, progress, bonuses, achievements, and 1:1 meetings.
+Go mentorship platform backend. Built with Go, Gin, GORM, and PostgreSQL. Provides a high-performance, concurrent REST API for students, buddies (mentors), and administrators to manage learning roadmaps, training progress, bonus economics, achievements, interviews, and calendars.
 
 ## Prerequisites
 
+- Go v1.22+ (for local compilation)
 - Docker v24.0+
 - Docker Compose v2.20+
 
 ## Quick Start
 
 1. Clone the repository and navigate to the project root directory:
+
+   ```bash
    git clone https://github.com
    cd mentorship-backend
+   ```
 
-2. Configure environment variables:
-   Create a local .env file based on .env.example:
+2. Configure infrastructure environment variables:
+
+   ```bash
    cp .env.example .env
+   ```
 
-3. Start the application:
-   docker compose up -d
+3. Initialize local containers ecosystem:
+   ```bash
+   docker compose up -d --build
+   ```
    The backend service will be available at http://localhost:8080.
 
-## API
+## API Architecture
 
 ### Health Check
 
-Verify the service status using the liveness probe:
+Verify the service network lifecycle using the liveness probe:
 
-- GET /ping — Returns HTTP 200 if the service is running
+- **GET** `/ping` — Returns HTTP 200 `{"message": "pong"}` if the service runtime is healthy
 
 ### Authentication Endpoints
 
-- POST /api/auth/register — Register a new account
-- POST /api/auth/login — Authenticate and obtain a JWT Bearer token
-- Note: For a complete list of endpoints, see the route definitions in the internal/handlers package.
+- **POST** `/api/auth/register` — Provision a new account profile
+- **POST** `/api/auth/login` — Authenticate credentials and obtain a stateful JWT Bearer token
 
-### Demo Accounts
+_Note: For the comprehensive routing registry including `/api/admin/_`boundaries, inspect structural definitions inside the`internal/handlers/` package.\*
 
-Register these accounts using the POST /api/auth/register endpoint before authenticating:
+### Pre-Seeded Local Environment Setup
 
-- Student:
-  { "login": "student1", "password": "123", "roles": ["student"] }
+Execute these explicit payloads via terminal to populate your local PostgreSQL database instance before logging in:
 
-- Buddy (Mentor):
-  { "login": "buddy1", "password": "123", "roles": ["buddy"] }
+```bash
+# Register Admin Profile
+curl -X POST http://localhost:8080/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"login":"admin","password":"admin123","display_name":"Platform Administrator","roles":["admin"]}'
 
-- Admin:
-  { "login": "admin1", "password": "admin123", "roles": ["admin"] }
+# Register Buddy Profile
+curl -X POST http://localhost:8080/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"login":"buddy1","password":"123","display_name":"Senior Mentor","roles":["buddy"]}'
 
-## Tests
+# Register Student Profile
+curl -X POST http://localhost:8080/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"login":"student1","password":"123","display_name":"Junior Engineer","roles":["student"]}'
+```
 
-Run the automated E2E script to validate core authentication, roadmap tracking, and bonus logic:
+## Automated Testing Suite
 
+Execute the integration test script suite to validate core authentication state machines, database transaction isolation, and bonus accounting mechanics:
+
+```bash
 chmod +x test_backend.sh
 ./test_backend.sh
+```
 
-## Teardown
+## Infrastructure Teardown
 
-To stop the containers and remove networks, execute:
+To gracefully terminate operational runtimes, isolate networks, and flush transient execution layers:
 
+```bash
 docker compose down
+```
 
-## Layout
+## Repository Layout (Clean Architecture)
 
-- cmd/api/main.go — Application entry point. Initializes configuration, database, services, and starts the Gin HTTP server.
-- internal/config/config.go — Loads environment variables: DB, JWT, port.
-- internal/models/ — Domain and GORM models: users, blocks, materials, progress, bonuses.
-- internal/repositories/ — Data access layer, one repository per aggregate root.
-- internal/services/ — Business logic: progress, bonuses, achievements.
-- internal/handlers/ — HTTP handlers, request validation, and JSON responses.
-- internal/middleware/auth.go — Gin middleware for JWT validation and role extraction.
-- pkg/db/postgres.go — PostgreSQL client pool initialization and automated GORM migrations.
-- docker-compose.yml — Orchestration file for local development (PostgreSQL and backend service).
-- Dockerfile — Multi-stage Docker build config for production Go binaries.
+- `cmd/api/main.go` — Application entry point. Resolves configuration bindings, initializes connection pools, and mounts the HTTP server engine.
+- `internal/config/config.go` — Atomic environment parser mappings (Database pooling settings, JWT credentials secret, GIN network flags).
+- `internal/models/` — Domain entity abstractions and relational mappings: users, blocks, materials, progress trackers, bonus logs.
+- `internal/repositories/` — Data Access Object (DAO) layer encapsulating database mutation logic.
+- `internal/services/` — Pure business domain execution layer isolated from networking transport protocols.
+- `internal/handlers/` — Input transport validation, route binding contexts, and output JSON contract formatting.
+- `internal/middleware/auth.go` — Token validation boundary intercepting contextual user extraction and role claims authorization.
+- `pkg/db/postgres.go` — Connection lifecycle broker establishing thread-safe connection pools and automating migrations.
+- `docker-compose.yml` — Local environment orchestration schema linking stateless Go binary runtime and PostgreSQL instances.
+- `Dockerfile` — High-efficiency multi-stage container file building stripped down static lightweight scratch binaries.
