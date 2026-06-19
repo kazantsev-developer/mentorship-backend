@@ -2,9 +2,7 @@ package main
 
 import (
 	"log"
-	"time"
 
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/kazantsev/mentorship-backend/internal/config"
 	"github.com/kazantsev/mentorship-backend/internal/handlers"
@@ -29,33 +27,25 @@ func main() {
 	authHandler := handlers.NewAuthHandler(authService)
 
 	blockRepo := repositories.NewBlockRepository(db.GetDB())
-	materialRepo := repositories.NewMaterialRepository(db.GetDB())
-	progressRepo := repositories.NewProgressRepository(db.GetDB())
-	activityRepo := repositories.NewActivityRepository(db.GetDB())
-
 	roadmapService := services.NewRoadmapService(blockRepo, db.GetDB())
 	roadmapHandler := handlers.NewRoadmapHandler(roadmapService)
+
+	materialRepo := repositories.NewMaterialRepository(db.GetDB())
+	progressRepo := repositories.NewProgressRepository(db.GetDB())
 
 	bonusRepo := repositories.NewBonusRepository(db.GetDB())
 	bonusService := services.NewBonusService(bonusRepo)
 	achievementRepo := repositories.NewAchievementRepository(db.GetDB())
-	achievementService := services.NewAchievementService(achievementRepo, bonusService, activityRepo)
+	achievementService := services.NewAchievementService(achievementRepo, bonusService)
 
-	progressService := services.NewProgressService(progressRepo, materialRepo, achievementService, activityRepo)
+	progressService := services.NewProgressService(progressRepo, materialRepo, achievementService)
 	progressHandler := handlers.NewProgressHandler(progressService)
 
-	assignmentService := services.NewAssignmentService(db.GetDB(), userRepo, progressRepo)
-	assignmentHandler := handlers.NewAssignmentHandler(
-		assignmentService,
-		userRepo,
-		progressRepo,
-		blockRepo,
-		activityRepo,
-		db.GetDB(),
-	)
+	assignmentService := services.NewAssignmentService(db.GetDB(), userRepo)
+	assignmentHandler := handlers.NewAssignmentHandler(assignmentService)
 
 	interviewService := services.NewInterviewService(db.GetDB())
-	interviewHandler := handlers.NewInterviewHandler(interviewService, activityRepo)
+	interviewHandler := handlers.NewInterviewHandler(interviewService)
 
 	calendarService := services.NewCalendarService(db.GetDB())
 	calendarHandler := handlers.NewCalendarHandler(calendarService)
@@ -68,33 +58,23 @@ func main() {
 
 	profileHandler := handlers.NewProfileHandler(userRepo)
 
-	blockApproveHandler := handlers.NewBlockApproveHandler(progressRepo, activityRepo)
-
-	// Админские хендлеры
-	adminUserHandler := handlers.NewAdminUserHandler(
-		userRepo,
-		authService,
-		progressRepo,
-		blockRepo,
-		activityRepo,
-		db.GetDB(),
-	)
+	blockApproveHandler := handlers.NewBlockApproveHandler(progressRepo)
+	adminUserHandler := handlers.NewAdminUserHandler(userRepo, authService)
 	adminRoadmapHandler := handlers.NewAdminRoadmapHandler(db.GetDB())
-	adminMaterialHandler := handlers.NewAdminMaterialHandler(db.GetDB())
-	adminAchievementHandler := handlers.NewAdminAchievementHandler(db.GetDB())
-	adminStatsHandler := handlers.NewAdminStatsHandler(db.GetDB())
-	adminOneOnOneHandler := handlers.NewAdminOneOnOneHandler(db.GetDB(), bonusService)
 
 	r := gin.Default()
 
-	r.Use(cors.New(cors.Config{
-		AllowOrigins:     cfg.AllowedOrigins,
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
-	}))
+	r.Use(func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE, OPTIONS")
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+		c.Next()
+	})
 
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "pong"})
@@ -114,10 +94,6 @@ func main() {
 			user, err := userRepo.FindByID(userID)
 			if err != nil {
 				c.JSON(500, gin.H{"error": "failed to fetch user"})
-				return
-			}
-			if user == nil {
-				c.JSON(404, gin.H{"error": "user not found"})
 				return
 			}
 			user.PasswordHash = ""
@@ -190,41 +166,21 @@ func main() {
 		adminGroup := protected.Group("/admin")
 		adminGroup.Use(middleware.RoleMiddleware("admin"))
 		{
+			adminGroup.POST("/assign-buddy", assignmentHandler.AssignBuddy)
+
 			adminGroup.GET("/users", adminUserHandler.ListUsers)
 			adminGroup.POST("/users", adminUserHandler.CreateUser)
-			adminGroup.GET("/users/:user_id", adminUserHandler.GetUser)
 			adminGroup.PUT("/users/:user_id", adminUserHandler.UpdateUser)
 			adminGroup.DELETE("/users/:user_id", adminUserHandler.DeleteUser)
 			adminGroup.POST("/users/:user_id/change-password", adminUserHandler.ChangePassword)
-			adminGroup.GET("/users/:user_id/progress", adminUserHandler.GetUserProgress)
-			adminGroup.POST("/users/:user_id/approve-block/:block_id", adminUserHandler.ApproveBlock)
-			adminGroup.POST("/assign-buddy", assignmentHandler.AssignBuddy)
+
 			adminGroup.GET("/blocks", adminRoadmapHandler.ListBlocks)
 			adminGroup.POST("/blocks", adminRoadmapHandler.CreateBlock)
 			adminGroup.PUT("/blocks/:id", adminRoadmapHandler.UpdateBlock)
 			adminGroup.DELETE("/blocks/:id", adminRoadmapHandler.DeleteBlock)
-			adminGroup.GET("/materials", adminMaterialHandler.ListMaterials)
-			adminGroup.POST("/materials", adminMaterialHandler.CreateMaterial)
-			adminGroup.PUT("/materials/:id", adminMaterialHandler.UpdateMaterial)
-			adminGroup.DELETE("/materials/:id", adminMaterialHandler.DeleteMaterial)
-			adminGroup.PATCH("/materials/:id/status", adminMaterialHandler.ToggleMaterialStatus)
-			adminGroup.GET("/achievements", adminAchievementHandler.ListAchievements)
-			adminGroup.POST("/achievements", adminAchievementHandler.CreateAchievement)
-			adminGroup.PUT("/achievements/:id", adminAchievementHandler.UpdateAchievement)
-			adminGroup.DELETE("/achievements/:id", adminAchievementHandler.DeleteAchievement)
-			adminGroup.PATCH("/achievements/:id/status", adminAchievementHandler.ToggleAchievementStatus)
-			adminGroup.GET("/achievements/:id/users", adminAchievementHandler.GetAchievementUsers)
-			adminGroup.GET("/one-on-one", adminOneOnOneHandler.ListRequests)
-			adminGroup.POST("/one-on-one/:id/approve", adminOneOnOneHandler.Approve)
-			adminGroup.POST("/one-on-one/:id/reject", adminOneOnOneHandler.Reject)
-			adminGroup.POST("/one-on-one/:id/complete", adminOneOnOneHandler.Complete)
-			adminGroup.GET("/stats", adminStatsHandler.GetStats)
 		}
 
 		protected.GET("/my-students", assignmentHandler.MyStudents)
-		protected.GET("/buddy/students/:id/activity", assignmentHandler.GetStudentActivity)
-		protected.GET("/buddy/students/:id", assignmentHandler.GetStudent)
-		protected.GET("/buddy/students/:id/roadmap", assignmentHandler.GetStudentRoadmap)
 
 		protected.POST("/interviews/real", interviewHandler.CreateReal)
 		protected.POST("/interviews/mock", interviewHandler.CreateMock)

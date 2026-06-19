@@ -2,6 +2,7 @@ package models
 
 import "time"
 
+// InterviewType defines the type of an interview
 type InterviewType string
 
 const (
@@ -9,6 +10,7 @@ const (
 	InterviewReal InterviewType = "real"
 )
 
+// Interview represents an interview record (mock or real)
 type Interview struct {
 	ID        string        `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
 	Type      InterviewType `gorm:"type:varchar(10);not null"`

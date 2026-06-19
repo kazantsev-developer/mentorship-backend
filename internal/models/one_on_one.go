@@ -2,6 +2,7 @@ package models
 
 import "time"
 
+// OneOnOneRequest represents a student's request for a one-on-one meeting
 type OneOnOneRequest struct {
 	ID          string  `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
 	StudentID   string  `gorm:"type:uuid;not null;index"`

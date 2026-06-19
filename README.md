@@ -1,188 +1,75 @@
-# Платформа менторства по Go (Backend)
+# Go Mentorship Platform (Backend)
 
-Backend-часть платформы для студентов, наставников и администраторов. Реализована на Go с использованием Gin, GORM и PostgreSQL.
+Internal platform for managing the Go mentorship program. It provides a REST API for students, buddies, and administrators to track roadmaps, progress, bonuses, achievements, and 1:1 meetings.
 
-## Запуск через Docker Compose
+## Prerequisites
 
-## Склонируйте репозиторий и перейдите в папку проекта:
+- Docker v24.0+
+- Docker Compose v2.20+
 
-git clone https://github.com/kazantsev-developer/mentorship-backend.git
-cd mentorship-backend
-Скопируйте файл с переменными окружения:
+## Quick Start
 
-cp .env.example .env
-При необходимости отредактируйте .env (пароли, JWT-секрет, настройки БД).
+1. Clone the repository and navigate to the project root directory:
+   git clone https://github.com
+   cd mentorship-backend
 
-## Запустите контейнеры:
+2. Configure environment variables:
+   Create a local .env file based on .env.example:
+   cp .env.example .env
 
-docker-compose up -d
-Бэкенд будет доступен по адресу http://localhost:8080.
+3. Start the application:
+   docker compose up -d
+   The backend service will be available at http://localhost:8080.
 
-## Остановка
+## API
 
-docker-compose down
+### Health Check
 
-Health check: GET /ping {"message":"pong"}
+Verify the service status using the liveness probe:
 
-## Регистрация и логин
+- GET /ping — Returns HTTP 200 if the service is running
 
-### Регистрация
+### Authentication Endpoints
 
-curl -X POST http://localhost:8080/api/auth/register \
- -H "Content-Type: application/json" \
- -d '{"login":"test","password":"123","display_name":"Test","roles":["student"]}'
+- POST /api/auth/register — Register a new account
+- POST /api/auth/login — Authenticate and obtain a JWT Bearer token
+- Note: For a complete list of endpoints, see the route definitions in the internal/handlers package.
 
-### Логин
+### Demo Accounts
 
-curl -X POST http://localhost:8080/api/auth/login \
- -H "Content-Type: application/json" \
- -d '{"login":"test","password":"123"}'
+Register these accounts using the POST /api/auth/register endpoint before authenticating:
 
-## Демо-аккаунты уже созданы в базе
+- Student:
+  { "login": "student1", "password": "123", "roles": ["student"] }
 
-Роль Логин Пароль
-Студент test_student 123
-Бадди test_buddy 123
-Админ admin 123
+- Buddy (Mentor):
+  { "login": "buddy1", "password": "123", "roles": ["buddy"] }
 
-## Технологии
+- Admin:
+  { "login": "admin1", "password": "admin123", "roles": ["admin"] }
 
-Go 1.25 (Alpine)
-Gin – HTTP-роутер
-GORM – ORM для PostgreSQL
-JWT – аутентификация (golang-jwt)
-Bcrypt – хэширование паролей
-Docker Compose – контейнеризация
+## Tests
 
-## Основные эндпоинты
+Run the automated E2E script to validate core authentication, roadmap tracking, and bonus logic:
 
-## Публичные
+chmod +x test_backend.sh
+./test_backend.sh
 
-POST /api/auth/register Регистрация
-POST /api/auth/login Вход (JWT-токен)
+## Teardown
 
-## Защищённые (требуют токен)
+To stop the containers and remove networks, execute:
 
-## Профиль
+docker compose down
 
-GET /api/user/profile – текущий пользователь
-PUT /api/user/profile – обновление профиля
-GET /api/user/:id/profile – публичный профиль
+## Layout
 
-## Roadmap и прогресс
-
-GET /api/roadmap – блоки и материалы с прогрессом студента
-POST /api/materials/view – отметка материала просмотренным
-
-## Бонусы и достижения
-
-GET /api/bonus/balance – баланс бонусов
-GET /api/bonus/history – история операций
-POST /api/bonus/convert – конвертация 100 бонусов → 1% скидки
-GET /api/achievements – список достижений с прогрессом
-Buddy (наставник)
-GET /api/my-students – список закреплённых студентов
-POST /api/blocks/approve – подтверждение блока
-GET /api/buddy/students/:id – данные студента
-GET /api/buddy/students/:id/roadmap – прогресс по блокам студента
-GET /api/buddy/students/:id/activity – история активности студента
-
-## Собеседования
-
-POST /api/interviews/real – добавить real‑собеседование
-POST /api/interviews/mock – добавить mock‑собеседование
-GET /api/interviews/my – список собеседований студента
-GET /api/interviews/real – общий каталог real‑собеседований
-
-## Календарь
-
-POST /api/calendar/events – создать событие (buddy)
-GET /api/calendar/events – события для текущего пользователя
-GET /api/calendar/upcoming – ближайшие 7 дней
-
-## Заявки 1x1 (для студента)
-
-POST /api/one-on-one – создать заявку
-GET /api/one-on-one – список заявок студента
-POST /api/one-on-one/approve – одобрить (только админ)
-POST /api/one-on-one/reject – отклонить (только админ)
-
-## Финальные проверки
-
-POST /api/final-checks/schedule – назначить (buddy)
-POST /api/final-checks/complete – завершить с результатом
-GET /api/final-checks/student/:student_id – список проверок студента
-
-## Администрирование (требуют роль admin)
-
-## Пользователи (расширенное управление)
-
-GET /api/admin/users – список пользователей
-POST /api/admin/users – создание пользователя
-GET /api/admin/users/:user_id – детальная информация
-PUT /api/admin/users/:user_id – редактирование
-DELETE /api/admin/users/:user_id – soft delete
-POST /api/admin/users/:user_id/change-password – смена пароля
-GET /api/admin/users/:user_id/progress – прогресс студента по блокам
-POST /api/admin/users/:user_id/approve-block/:block_id – подтвердить блок (админ)
-
-### Назначение Buddy
-
-POST /api/admin/assign-buddy – привязать бадди к студенту
-
-### Roadmap блоки
-
-GET /api/admin/blocks – список блоков
-POST /api/admin/blocks – создать блок
-PUT /api/admin/blocks/:id – обновить
-DELETE /api/admin/blocks/:id – удалить (soft delete)
-
-### Материалы
-
-GET /api/admin/materials – список материалов (фильтр по block_id)
-POST /api/admin/materials – создать материал
-PUT /api/admin/materials/:id – обновить
-DELETE /api/admin/materials/:id – удалить (soft delete)
-PATCH /api/admin/materials/:id/status – включить/отключить (is_active)
-
-### Достижения
-
-GET /api/admin/achievements – все достижения
-POST /api/admin/achievements – создать
-PUT /api/admin/achievements/:id – обновить
-DELETE /api/admin/achievements/:id – удалить
-PATCH /api/admin/achievements/:id/status – включить/отключить
-GET /api/admin/achievements/:id/users – список пользователей, получивших достижение
-
-### Заявки 1x1 (админская панель)
-
-GET /api/admin/one-on-one – все заявки (с именем студента и балансом бонусов)
-POST /api/admin/one-on-one/:id/approve – одобрить (списывает 1000 бонусов)
-POST /api/admin/one-on-one/:id/reject – отклонить
-POST /api/admin/one-on-one/:id/complete – отметить завершённой
-
-### Статистика
-
-GET /api/admin/stats – общие метрики: количество пользователей, студентов, бадди, активных заявок 1x1, выданных достижений
-
-## Модели данных (основные)
-
-users – логин, пароль, отображаемое имя, telegram, дата начала обучения
-user_roles – связь пользователя с ролями (student, buddy, admin)
-student_buddy_assignments – назначение бадди студенту
-blocks – блоки roadmap (название, описание, порядок)
-materials – материалы (тип, content_type, URL, обязательность)
-material_progresses – отметка материалов студентами
-block_progresses – статус блока для студента
-achievements – достижения (название, бонус, условие)
-user_achievements – выданные достижения
-bonus_transactions – история бонусов
-interviews – собеседования (mock/real, компания, позиция, фидбэк)
-calendar_events – события календаря
-one_on_one_requests – заявки на 1x1
-final_checks – финальные проверки (техничка, прожарка)
-activity_events – лог активности пользователя
-
-## CORS
-
-Разрешённые источники задаются переменной ALLOWED_ORIGINS(например, http://localhost:3000,http://185.75.189.130:3000).
+- cmd/api/main.go — Application entry point. Initializes configuration, database, services, and starts the Gin HTTP server.
+- internal/config/config.go — Loads environment variables: DB, JWT, port.
+- internal/models/ — Domain and GORM models: users, blocks, materials, progress, bonuses.
+- internal/repositories/ — Data access layer, one repository per aggregate root.
+- internal/services/ — Business logic: progress, bonuses, achievements.
+- internal/handlers/ — HTTP handlers, request validation, and JSON responses.
+- internal/middleware/auth.go — Gin middleware for JWT validation and role extraction.
+- pkg/db/postgres.go — PostgreSQL client pool initialization and automated GORM migrations.
+- docker-compose.yml — Orchestration file for local development (PostgreSQL and backend service).
+- Dockerfile — Multi-stage Docker build config for production Go binaries.

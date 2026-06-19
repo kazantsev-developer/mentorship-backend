@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+// BonusTransactionType defines the type of a bonus transaction
 type BonusTransactionType string
 
 const (
@@ -14,6 +15,7 @@ const (
 	BonusTypeRefund        BonusTransactionType = "refund"
 )
 
+// BonusBalance stores the current bonus balance for a user
 type BonusBalance struct {
 	ID        string `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
 	UserID    string `gorm:"type:uuid;not null;uniqueIndex"`
@@ -22,6 +24,7 @@ type BonusBalance struct {
 	UpdatedAt time.Time
 }
 
+// BonusTransaction records an individual bonus transaction
 type BonusTransaction struct {
 	ID         string               `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
 	UserID     string               `gorm:"type:uuid;not null;index"`

@@ -6,21 +6,24 @@ import (
 	"gorm.io/gorm"
 )
 
+// RoadmapService provides aggregated roadmap data for students
 type RoadmapService struct {
 	blockRepo *repositories.BlockRepository
 	db        *gorm.DB
 }
 
+// NewRoadmapService returns a new RoadmapService instance
 func NewRoadmapService(blockRepo *repositories.BlockRepository, db *gorm.DB) *RoadmapService {
 	return &RoadmapService{blockRepo: blockRepo, db: db}
 }
 
-func (s *RoadmapService) GetFullRoadmap(studentID string) ([]map[string]interface{}, error) {
+// GetFullRoadmap builds a complete roadmap with progress for a student
+func (s *RoadmapService) GetFullRoadmap(studentID string) ([]map[string]any, error) {
 	blocks, err := s.blockRepo.GetAllActive()
 	if err != nil {
 		return nil, err
 	}
-	var result []map[string]interface{}
+	var result []map[string]any
 	for _, block := range blocks {
 		var blockProgress models.BlockProgress
 		s.db.Where("student_id = ? AND block_id = ?", studentID, block.ID).First(&blockProgress)
@@ -38,7 +41,7 @@ func (s *RoadmapService) GetFullRoadmap(studentID string) ([]map[string]interfac
 				}
 			}
 		}
-		materials := make([]map[string]interface{}, 0)
+		materials := make([]map[string]any, 0)
 		for _, m := range block.Materials {
 			viewed := false
 			var mp models.MaterialProgress
@@ -46,7 +49,7 @@ func (s *RoadmapService) GetFullRoadmap(studentID string) ([]map[string]interfac
 			if mp.ID != "" {
 				viewed = true
 			}
-			materials = append(materials, map[string]interface{}{
+			materials = append(materials, map[string]any{
 				"id":          m.ID,
 				"title":       m.Title,
 				"description": m.Description,
@@ -56,11 +59,11 @@ func (s *RoadmapService) GetFullRoadmap(studentID string) ([]map[string]interfac
 				"viewed":      viewed,
 			})
 		}
-		result = append(result, map[string]interface{}{
+		result = append(result, map[string]any{
 			"id":          block.ID,
 			"title":       block.Title,
 			"description": block.Description,
-			"progress": map[string]interface{}{
+			"progress": map[string]any{
 				"status":  status,
 				"percent": percent,
 			},

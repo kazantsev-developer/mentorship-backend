@@ -1,28 +1,30 @@
+// Package config provides application configuration loading from environment
 package config
 
 import (
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 )
 
+// Config aggregates all configuration sections
 type Config struct {
-	Server         ServerConfig
-	Database       DatabaseConfig
-	JWT            JWTConfig
-	Admin          AdminConfig
-	AllowedOrigins []string
+	Server   ServerConfig
+	Database DatabaseConfig
+	JWT      JWTConfig
+	Admin    AdminConfig
 }
 
+// ServerConfig contains server-related settings
 type ServerConfig struct {
 	Port string
 	Mode string
 }
 
+// DatabaseConfig contains database connection parameters
 type DatabaseConfig struct {
 	Host     string
 	Port     string
@@ -32,22 +34,26 @@ type DatabaseConfig struct {
 	SSLMode  string
 }
 
+// JWTConfig contains JSON Web Token settings
 type JWTConfig struct {
 	Secret      string
 	ExpiresHour int
 	ExpiresAt   time.Duration
 }
 
+// AdminConfig contains default admin credentials
 type AdminConfig struct {
 	Login    string
 	Password string
 }
 
+// AppConfig holds the loaded application configuration
 var AppConfig *Config
 
+// Load reads configuration from environment variables and optional .env file
 func Load() (*Config, error) {
 	if err := godotenv.Load(); err != nil {
-		logrus.Warn("No .env file found, using system env")
+		logrus.Warn("no .env file found, using system env")
 	}
 
 	cfg := &Config{
@@ -71,14 +77,15 @@ func Load() (*Config, error) {
 			Login:    getEnv("ADMIN_LOGIN", "admin"),
 			Password: getEnv("ADMIN_PASSWORD", "admin123"),
 		},
-		AllowedOrigins: parseOrigins(getEnv("ALLOWED_ORIGINS", "http://localhost:3000")),
 	}
+
 	cfg.JWT.ExpiresAt = time.Duration(cfg.JWT.ExpiresHour) * time.Hour
 
 	AppConfig = cfg
 	return cfg, nil
 }
 
+// GetDSN returns the PostgreSQL connection string
 func (c *Config) GetDSN() string {
 	return "host=" + c.Database.Host +
 		" port=" + c.Database.Port +
@@ -86,20 +93,6 @@ func (c *Config) GetDSN() string {
 		" password=" + c.Database.Password +
 		" dbname=" + c.Database.DBName +
 		" sslmode=" + c.Database.SSLMode
-}
-
-func parseOrigins(originsStr string) []string {
-	if originsStr == "" {
-		return []string{}
-	}
-	parts := strings.Split(originsStr, ",")
-	result := make([]string, 0, len(parts))
-	for _, p := range parts {
-		if trimmed := strings.TrimSpace(p); trimmed != "" {
-			result = append(result, trimmed)
-		}
-	}
-	return result
 }
 
 func getEnv(key, defaultValue string) string {

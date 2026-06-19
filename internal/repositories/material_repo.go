@@ -5,14 +5,17 @@ import (
 	"gorm.io/gorm"
 )
 
+// MaterialRepository handles database operations for learning materials
 type MaterialRepository struct {
 	db *gorm.DB
 }
 
+// NewMaterialRepository returns a new MaterialRepository instance
 func NewMaterialRepository(db *gorm.DB) *MaterialRepository {
 	return &MaterialRepository{db: db}
 }
 
+// GetByID returns a material by its ID
 func (r *MaterialRepository) GetByID(id string) (*models.Material, error) {
 	var material models.Material
 	err := r.db.Where("id = ?", id).First(&material).Error
@@ -22,6 +25,7 @@ func (r *MaterialRepository) GetByID(id string) (*models.Material, error) {
 	return &material, nil
 }
 
+// GetMaterialsByBlockID returns all active materials for a block
 func (r *MaterialRepository) GetMaterialsByBlockID(blockID string) ([]models.Material, error) {
 	var materials []models.Material
 	err := r.db.Where("block_id = ? AND is_active = ?", blockID, true).Find(&materials).Error

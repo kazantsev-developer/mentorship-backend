@@ -10,15 +10,18 @@ import (
 	"gorm.io/gorm"
 )
 
+// AdminOneOnOneHandler handles administrative operations on 1:1 requests
 type AdminOneOnOneHandler struct {
 	db           *gorm.DB
 	bonusService *services.BonusService
 }
 
+// NewAdminOneOnOneHandler returns a new AdminOneOnOneHandler instance
 func NewAdminOneOnOneHandler(db *gorm.DB, bonusService *services.BonusService) *AdminOneOnOneHandler {
 	return &AdminOneOnOneHandler{db: db, bonusService: bonusService}
 }
 
+// ListRequests returns all 1:1 requests with student details
 func (h *AdminOneOnOneHandler) ListRequests(c *gin.Context) {
 	var requests []models.OneOnOneRequest
 	h.db.Order("created_at desc").Find(&requests)
@@ -31,7 +34,7 @@ func (h *AdminOneOnOneHandler) ListRequests(c *gin.Context) {
 		Status       string    `json:"status"`
 		CreatedAt    time.Time `json:"created_at"`
 	}
-	result := make([]RequestWithStudent, 0)
+	result := make([]RequestWithStudent, 0, len(requests))
 	for _, req := range requests {
 		var user models.User
 		h.db.First(&user, "id = ?", req.StudentID)
@@ -48,6 +51,7 @@ func (h *AdminOneOnOneHandler) ListRequests(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
+// Approve approves a pending 1:1 request after checking bonus balance
 func (h *AdminOneOnOneHandler) Approve(c *gin.Context) {
 	id := c.Param("id")
 	var req models.OneOnOneRequest
@@ -61,20 +65,16 @@ func (h *AdminOneOnOneHandler) Approve(c *gin.Context) {
 	}
 	balance, err := h.bonusService.GetBalance(req.StudentID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to check balance"})
 		return
 	}
 	if balance < 1000 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "insufficient bonus balance (need 1000)"})
 		return
 	}
-	// Используем прямой вызов репозитория через экспортируемое поле (если не хотим создавать метод в сервисе)
-	// В bonus_service.go поле repo не экспортировано, поэтому добавим публичный метод в bonus_service.go
-	// Для простоты создадим метод SpendForOneOnOne в bonus_service.go (см. ниже)
-	// Но чтобы не усложнять, добавим метод прямо сейчас:
 	_, err = h.bonusService.SpendForOneOnOne(req.StudentID, id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to process payment"})
 		return
 	}
 	req.Status = "approved"
@@ -86,6 +86,7 @@ func (h *AdminOneOnOneHandler) Approve(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "approved"})
 }
 
+// Reject rejects a pending 1:1 request
 func (h *AdminOneOnOneHandler) Reject(c *gin.Context) {
 	id := c.Param("id")
 	var req models.OneOnOneRequest
@@ -106,6 +107,7 @@ func (h *AdminOneOnOneHandler) Reject(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "rejected"})
 }
 
+// Complete marks an approved 1:1 request as completed
 func (h *AdminOneOnOneHandler) Complete(c *gin.Context) {
 	id := c.Param("id")
 	var req models.OneOnOneRequest

@@ -1,3 +1,4 @@
+// Package services implements business logic for the mentorship platform
 package services
 
 import (
@@ -6,16 +7,18 @@ import (
 	"github.com/kazantsev/mentorship-backend/internal/repositories"
 )
 
+// AchievementService evaluates and grants achievements to users
 type AchievementService struct {
 	repo         *repositories.AchievementRepository
 	bonusService *BonusService
-	activityRepo *repositories.ActivityRepository
 }
 
-func NewAchievementService(repo *repositories.AchievementRepository, bonusService *BonusService, activityRepo *repositories.ActivityRepository) *AchievementService {
-	return &AchievementService{repo: repo, bonusService: bonusService, activityRepo: activityRepo}
+// NewAchievementService returns a new AchievementService instance
+func NewAchievementService(repo *repositories.AchievementRepository, bonusService *BonusService) *AchievementService {
+	return &AchievementService{repo: repo, bonusService: bonusService}
 }
 
+// CheckAndGrantByMaterialCount awards achievements based on total viewed materials
 func (s *AchievementService) CheckAndGrantByMaterialCount(userID string, count int) error {
 	achievements, err := s.repo.GetByConditionType("material_count")
 	if err != nil {
@@ -37,14 +40,13 @@ func (s *AchievementService) CheckAndGrantByMaterialCount(userID string, count i
 			}
 			if reward > 0 {
 				s.bonusService.EarnAchievementBonus(userID, reward, ach.ID)
-				metadata := `{"title": "` + ach.Title + `"}`
-				_ = s.activityRepo.CreateActivity(userID, userID, "achievement_earned", "achievement", ach.ID, metadata)
 			}
 		}
 	}
 	return nil
 }
 
+// CheckAndGrantByBlockClosed awards achievements when a specific block is approved
 func (s *AchievementService) CheckAndGrantByBlockClosed(userID string, blockNumber int) error {
 	achievements, err := s.repo.GetByConditionType("block_closed")
 	if err != nil {
@@ -66,8 +68,6 @@ func (s *AchievementService) CheckAndGrantByBlockClosed(userID string, blockNumb
 			}
 			if reward > 0 {
 				s.bonusService.EarnAchievementBonus(userID, reward, ach.ID)
-				metadata := `{"title": "` + ach.Title + `"}`
-				_ = s.activityRepo.CreateActivity(userID, userID, "achievement_earned", "achievement", ach.ID, metadata)
 			}
 		}
 	}

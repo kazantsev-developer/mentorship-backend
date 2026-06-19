@@ -8,10 +8,12 @@ import (
 	"github.com/kazantsev/mentorship-backend/internal/services"
 )
 
+// AuthHandler handles authentication-related HTTP requests
 type AuthHandler struct {
 	authService *services.AuthService
 }
 
+// NewAuthHandler returns a new AuthHandler instance
 func NewAuthHandler(authService *services.AuthService) *AuthHandler {
 	return &AuthHandler{authService: authService}
 }
@@ -24,10 +26,11 @@ type registerInput struct {
 	Roles            []string `json:"roles" binding:"required"`
 }
 
+// Register creates a new user account
 func (h *AuthHandler) Register(c *gin.Context) {
 	var input registerInput
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
 
@@ -56,7 +59,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 
 	user, err := h.authService.Register(req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "registration failed"})
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"user": user})
@@ -67,10 +70,11 @@ type loginInput struct {
 	Password string `json:"password" binding:"required"`
 }
 
+// Login authenticates a user and returns a JWT token
 func (h *AuthHandler) Login(c *gin.Context) {
 	var input loginInput
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
 	resp, err := h.authService.Login(services.LoginRequest{
@@ -78,7 +82,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		Password: input.Password,
 	})
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{

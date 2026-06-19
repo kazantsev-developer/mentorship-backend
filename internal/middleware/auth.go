@@ -1,3 +1,4 @@
+// Package middleware provides HTTP middleware for authentication and authorization
 package middleware
 
 import (
@@ -9,6 +10,7 @@ import (
 	"github.com/kazantsev/mentorship-backend/internal/utils"
 )
 
+// AuthMiddleware validates JWT tokens and injects user identity into the context
 func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
@@ -39,6 +41,7 @@ func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
 	}
 }
 
+// RoleMiddleware restricts access to users with at least one of the specified roles
 func RoleMiddleware(allowedRoles ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rolesAny, exists := c.Get("roles")
