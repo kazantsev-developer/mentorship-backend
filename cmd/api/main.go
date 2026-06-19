@@ -2,6 +2,8 @@ package main
 
 import (
 	"log"
+	"os"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kazantsev/mentorship-backend/internal/config"
@@ -62,13 +64,36 @@ func main() {
 	adminUserHandler := handlers.NewAdminUserHandler(userRepo, authService)
 	adminRoadmapHandler := handlers.NewAdminRoadmapHandler(db.GetDB())
 
+	adminMaterialHandler := handlers.NewAdminMaterialHandler(db.GetDB())
+	adminAchievementHandler := handlers.NewAdminAchievementHandler(db.GetDB())
+	adminStatsHandler := handlers.NewAdminStatsHandler(db.GetDB())
+	adminOneOnOneHandler := handlers.NewAdminOneOnOneHandler(db.GetDB(), bonusService)
+
+	allowedOrigins := make(map[string]struct{})
+	if envOrigins := os.Getenv("ALLOWED_ORIGINS"); envOrigins != "" {
+		for _, origin := range strings.Split(envOrigins, ",") {
+			allowedOrigins[strings.TrimSpace(origin)] = struct{}{}
+		}
+	} else {
+		allowedOrigins["http://localhost:3000"] = struct{}{}
+		allowedOrigins["http://localhost:3001"] = struct{}{}
+	}
+
 	r := gin.Default()
 
 	r.Use(func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+		origin := c.Request.Header.Get("Origin")
+
+		if _, ok := allowedOrigins[origin]; ok {
+			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
+		} else {
+			c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+		}
+
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE, OPTIONS")
+
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
 			return
@@ -146,10 +171,10 @@ func main() {
 				return
 			}
 			userID := c.GetString("userID")
-			result := make([]map[string]interface{}, 0)
+			result := make([]map[string]any, 0, len(achievements))
 			for _, ach := range achievements {
 				has, _ := achievementRepo.HasUserAchievement(userID, ach.ID)
-				result = append(result, map[string]interface{}{
+				result = append(result, map[string]any{
 					"id":           ach.ID,
 					"title":        ach.Title,
 					"description":  ach.Description,
@@ -178,6 +203,23 @@ func main() {
 			adminGroup.POST("/blocks", adminRoadmapHandler.CreateBlock)
 			adminGroup.PUT("/blocks/:id", adminRoadmapHandler.UpdateBlock)
 			adminGroup.DELETE("/blocks/:id", adminRoadmapHandler.DeleteBlock)
+
+			adminGroup.GET("/materials", adminMaterialHandler.ListMaterials)
+			adminGroup.POST("/materials", adminMaterialHandler.CreateMaterial)
+			adminGroup.PUT("/materials/:id", adminMaterialHandler.UpdateMaterial)
+			adminGroup.DELETE("/materials/:id", adminMaterialHandler.DeleteMaterial)
+
+			adminGroup.GET("/achievements", adminAchievementHandler.ListAchievements)
+			adminGroup.POST("/achievements", adminAchievementHandler.CreateAchievement)
+			adminGroup.PUT("/achievements/:id", adminAchievementHandler.UpdateAchievement)
+			adminGroup.DELETE("/achievements/:id", adminAchievementHandler.DeleteAchievement)
+
+			adminGroup.GET("/stats", adminStatsHandler.GetStats)
+
+			adminGroup.GET("/one-on-one", adminOneOnOneHandler.ListRequests)
+			adminGroup.POST("/one-on-one/:id/approve", adminOneOnOneHandler.Approve)
+			adminGroup.POST("/one-on-one/:id/reject", adminOneOnOneHandler.Reject)
+			adminGroup.POST("/one-on-one/:id/complete", adminOneOnOneHandler.Complete)
 		}
 
 		protected.GET("/my-students", assignmentHandler.MyStudents)
