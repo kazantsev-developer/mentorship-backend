@@ -11,14 +11,12 @@ Go mentorship platform backend. Built with Go, Gin, GORM, and PostgreSQL. Provid
 ## Quick Start
 
 1. Clone the repository and navigate to the project root directory:
-
    ```bash
    git clone https://github.com
    cd mentorship-backend
    ```
 
 2. Configure infrastructure environment variables:
-
    ```bash
    cp .env.example .env
    ```
@@ -34,7 +32,6 @@ Go mentorship platform backend. Built with Go, Gin, GORM, and PostgreSQL. Provid
 ### Health Check
 
 Verify the service network lifecycle using the liveness probe:
-
 - **GET** `/ping` — Returns HTTP 200 `{"message": "pong"}` if the service runtime is healthy
 
 ### Authentication Endpoints
@@ -42,7 +39,7 @@ Verify the service network lifecycle using the liveness probe:
 - **POST** `/api/auth/register` — Provision a new account profile
 - **POST** `/api/auth/login` — Authenticate credentials and obtain a stateful JWT Bearer token
 
-_Note: For the comprehensive routing registry including `/api/admin/_`boundaries, inspect structural definitions inside the`internal/handlers/` package.\*
+*Note: For the comprehensive routing registry including `/api/admin/*` boundaries, inspect structural definitions inside the `internal/handlers/` package.*
 
 ### Pre-Seeded Local Environment Setup
 
